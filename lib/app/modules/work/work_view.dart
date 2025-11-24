@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/work_experience.dart';
+import '../../utils/validators.dart';
 import 'work_controller.dart';
 
 class WorkView extends GetView<WorkController> {
@@ -15,6 +16,7 @@ class WorkView extends GetView<WorkController> {
   final TextEditingController endDateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final Rxn<WorkExperience> editingExperience = Rxn<WorkExperience>();
+  final RxBool isFormValid = false.obs;
 
   void _resetForm() {
     editingExperience.value = null;
@@ -23,12 +25,23 @@ class WorkView extends GetView<WorkController> {
     startDateController.clear();
     endDateController.clear();
     descriptionController.clear();
+    isFormValid.value = false;
+  }
+
+  void _updateFormValidity() {
+    final currentState = _formKey.currentState;
+    if (currentState == null) {
+      isFormValid.value = false;
+      return;
+    }
+
+    isFormValid.value = currentState.validate();
   }
 
   int? _parseProfileId() {
     final profileId = int.tryParse(profileIdController.text);
     if (profileId == null) {
-      Get.snackbar('Validation', 'Profile ID must be a number');
+      Get.snackbar('error'.tr, 'invalid_number'.tr);
     }
     return profileId;
   }
@@ -73,7 +86,7 @@ class WorkView extends GetView<WorkController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Work Experience'),
+        title: Text('work_experience'.tr),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -82,65 +95,69 @@ class WorkView extends GetView<WorkController> {
           children: [
             Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 children: [
                   TextFormField(
                     controller: profileIdController,
-                    decoration: const InputDecoration(labelText: 'Profile ID'),
+                    decoration: InputDecoration(labelText: 'profile_id'.tr),
                     keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    validator: FormValidators.numeric,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: companyController,
-                    decoration: const InputDecoration(labelText: 'Company'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'company_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: positionController,
-                    decoration: const InputDecoration(labelText: 'Position'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'position_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: startDateController,
-                    decoration: const InputDecoration(labelText: 'Start Date'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'start_date'.tr),
+                    validator: FormValidators.date,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: endDateController,
-                    decoration: const InputDecoration(labelText: 'End Date'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'end_date'.tr),
+                    validator: (_) => FormValidators.startBeforeEnd(
+                      start: startDateController.text,
+                      end: endDateController.text,
+                    ),
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'description_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      ElevatedButton(
-                        onPressed: _submit,
-                        child: Obx(
-                          () => Text(
-                            editingExperience.value == null ? 'Save' : 'Update',
-                          ),
-                        ),
-                      ),
+                      Obx(() => ElevatedButton(
+                            onPressed: isFormValid.value ? _submit : null,
+                            child: Text(
+                              editingExperience.value == null
+                                  ? 'save'.tr
+                                  : 'update'.tr,
+                            ),
+                          )),
                       const SizedBox(width: 8),
                       TextButton(
                         onPressed: _resetForm,
-                        child: const Text('Clear'),
+                        child: Text('clear'.tr),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: _loadList,
-                        child: const Text('Load List'),
+                        child: Text('load_list'.tr),
                       ),
                     ],
                   ),
@@ -148,16 +165,16 @@ class WorkView extends GetView<WorkController> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Work Experiences',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'work_experiences_title'.tr,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Obx(() {
               final works = controller.works;
 
               if (works.isEmpty) {
-                return const Text('No work experiences found.');
+                return Text('no_work_experiences'.tr);
               }
 
               return ListView.builder(
@@ -186,6 +203,7 @@ class WorkView extends GetView<WorkController> {
                               startDateController.text = experience.startDate;
                               endDateController.text = experience.endDate;
                               descriptionController.text = experience.description;
+                              _updateFormValidity();
                             },
                           ),
                           IconButton(

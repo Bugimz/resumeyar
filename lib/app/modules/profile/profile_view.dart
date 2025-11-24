@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../data/models/resume_profile.dart';
+import '../../utils/validators.dart';
 import 'profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -18,6 +19,7 @@ class ProfileView extends GetView<ProfileController> {
   final TextEditingController summaryController = TextEditingController();
   final Rxn<ResumeProfile> editingProfile = Rxn<ResumeProfile>();
   final RxnString imagePath = RxnString();
+  final RxBool isFormValid = false.obs;
 
   void _resetForm() {
     editingProfile.value = null;
@@ -26,6 +28,17 @@ class ProfileView extends GetView<ProfileController> {
     phoneController.clear();
     summaryController.clear();
     imagePath.value = null;
+    isFormValid.value = false;
+  }
+
+  void _updateFormValidity() {
+    final currentState = _formKey.currentState;
+    if (currentState == null) {
+      isFormValid.value = false;
+      return;
+    }
+
+    isFormValid.value = currentState.validate();
   }
 
   Future<void> _submit() async {
@@ -71,7 +84,7 @@ class ProfileView extends GetView<ProfileController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profiles'),
+        title: Text('profiles_title'.tr),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -80,31 +93,32 @@ class ProfileView extends GetView<ProfileController> {
           children: [
             Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 children: [
                   TextFormField(
                     controller: fullNameController,
-                    decoration: const InputDecoration(labelText: 'Full Name'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'full_name_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'email_label'.tr),
+                    validator: FormValidators.email,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: phoneController,
-                    decoration: const InputDecoration(labelText: 'Phone'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'phone_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: summaryController,
-                    decoration: const InputDecoration(labelText: 'Summary'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'summary_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -112,14 +126,14 @@ class ProfileView extends GetView<ProfileController> {
                       ElevatedButton.icon(
                         onPressed: _pickImage,
                         icon: const Icon(Icons.image),
-                        label: const Text('Select Image'),
+                        label: Text('select_image'.tr),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Obx(() {
                           final path = imagePath.value;
                           if (path == null || path.isEmpty) {
-                            return const Text('No image selected');
+                            return Text('no_image_selected'.tr);
                           }
                           return Row(
                             children: [
@@ -153,18 +167,18 @@ class ProfileView extends GetView<ProfileController> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      ElevatedButton(
-                        onPressed: _submit,
-                        child: Obx(
-                          () => Text(
-                            editingProfile.value == null ? 'Save' : 'Update',
-                          ),
-                        ),
-                      ),
+                      Obx(() => ElevatedButton(
+                            onPressed: isFormValid.value ? _submit : null,
+                            child: Text(
+                              editingProfile.value == null
+                                  ? 'save'.tr
+                                  : 'update'.tr,
+                            ),
+                          )),
                       const SizedBox(width: 8),
                       TextButton(
                         onPressed: _resetForm,
-                        child: const Text('Clear'),
+                        child: Text('clear'.tr),
                       ),
                     ],
                   ),
@@ -172,9 +186,9 @@ class ProfileView extends GetView<ProfileController> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Profiles',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'profiles_title'.tr,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Obx(() {
@@ -185,7 +199,7 @@ class ProfileView extends GetView<ProfileController> {
               }
 
               if (profiles.isEmpty) {
-                return const Text('No profiles found.');
+                return Text('no_profiles'.tr);
               }
 
               return ListView.builder(
@@ -210,6 +224,7 @@ class ProfileView extends GetView<ProfileController> {
                             phoneController.text = profile.phone;
                             summaryController.text = profile.summary;
                             imagePath.value = profile.imagePath;
+                            _updateFormValidity();
                           },
                           ),
                           IconButton(

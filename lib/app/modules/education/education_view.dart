@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/education.dart';
+import '../../utils/validators.dart';
 import 'education_controller.dart';
 
 class EducationView extends GetView<EducationController> {
@@ -16,6 +17,7 @@ class EducationView extends GetView<EducationController> {
   final TextEditingController endDateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final Rxn<Education> editingEducation = Rxn<Education>();
+  final RxBool isFormValid = false.obs;
 
   void _resetForm() {
     editingEducation.value = null;
@@ -25,12 +27,23 @@ class EducationView extends GetView<EducationController> {
     startDateController.clear();
     endDateController.clear();
     descriptionController.clear();
+    isFormValid.value = false;
+  }
+
+  void _updateFormValidity() {
+    final currentState = _formKey.currentState;
+    if (currentState == null) {
+      isFormValid.value = false;
+      return;
+    }
+
+    isFormValid.value = currentState.validate();
   }
 
   int? _parseProfileId() {
     final profileId = int.tryParse(profileIdController.text);
     if (profileId == null) {
-      Get.snackbar('Validation', 'Profile ID must be a number');
+      Get.snackbar('error'.tr, 'invalid_number'.tr);
     }
     return profileId;
   }
@@ -76,7 +89,7 @@ class EducationView extends GetView<EducationController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Education'),
+        title: Text('education'.tr),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -85,71 +98,77 @@ class EducationView extends GetView<EducationController> {
           children: [
             Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 children: [
                   TextFormField(
                     controller: profileIdController,
-                    decoration: const InputDecoration(labelText: 'Profile ID'),
+                    decoration: InputDecoration(labelText: 'profile_id'.tr),
                     keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    validator: FormValidators.numeric,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: schoolController,
-                    decoration: const InputDecoration(labelText: 'School'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'school_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: degreeController,
-                    decoration: const InputDecoration(labelText: 'Degree'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'degree_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: fieldController,
-                    decoration: const InputDecoration(labelText: 'Field of Study'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(
+                      labelText: 'field_of_study_label'.tr,
+                    ),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: startDateController,
-                    decoration: const InputDecoration(labelText: 'Start Date'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'start_date'.tr),
+                    validator: FormValidators.date,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: endDateController,
-                    decoration: const InputDecoration(labelText: 'End Date'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'end_date'.tr),
+                    validator: (_) => FormValidators.startBeforeEnd(
+                      start: startDateController.text,
+                      end: endDateController.text,
+                    ),
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'description_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      ElevatedButton(
-                        onPressed: _submit,
-                        child: Obx(
-                          () => Text(
-                            editingEducation.value == null ? 'Save' : 'Update',
-                          ),
-                        ),
-                      ),
+                      Obx(() => ElevatedButton(
+                            onPressed: isFormValid.value ? _submit : null,
+                            child: Text(
+                              editingEducation.value == null
+                                  ? 'save'.tr
+                                  : 'update'.tr,
+                            ),
+                          )),
                       const SizedBox(width: 8),
                       TextButton(
                         onPressed: _resetForm,
-                        child: const Text('Clear'),
+                        child: Text('clear'.tr),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: _loadList,
-                        child: const Text('Load List'),
+                        child: Text('load_list'.tr),
                       ),
                     ],
                   ),
@@ -157,16 +176,16 @@ class EducationView extends GetView<EducationController> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Education History',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'education_history_title'.tr,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Obx(() {
               final educations = controller.educations;
 
               if (educations.isEmpty) {
-                return const Text('No education history found.');
+                return Text('no_education_history'.tr);
               }
 
               return ListView.builder(
@@ -197,6 +216,7 @@ class EducationView extends GetView<EducationController> {
                               startDateController.text = education.startDate;
                               endDateController.text = education.endDate;
                               descriptionController.text = education.description;
+                              _updateFormValidity();
                             },
                           ),
                           IconButton(

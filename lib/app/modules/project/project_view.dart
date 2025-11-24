@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/project.dart';
+import '../../utils/validators.dart';
 import 'project_controller.dart';
 
 class ProjectView extends GetView<ProjectController> {
@@ -13,18 +14,30 @@ class ProjectView extends GetView<ProjectController> {
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController linkController = TextEditingController();
   final Rxn<Project> editingProject = Rxn<Project>();
+  final RxBool isFormValid = false.obs;
 
   void _resetForm() {
     editingProject.value = null;
     titleController.clear();
     descriptionController.clear();
     linkController.clear();
+    isFormValid.value = false;
+  }
+
+  void _updateFormValidity() {
+    final currentState = _formKey.currentState;
+    if (currentState == null) {
+      isFormValid.value = false;
+      return;
+    }
+
+    isFormValid.value = currentState.validate();
   }
 
   int? _parseProfileId() {
     final profileId = int.tryParse(profileIdController.text);
     if (profileId == null) {
-      Get.snackbar('Validation', 'Profile ID must be a number');
+      Get.snackbar('error'.tr, 'invalid_number'.tr);
     }
     return profileId;
   }
@@ -67,7 +80,7 @@ class ProjectView extends GetView<ProjectController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Projects'),
+        title: Text('projects'.tr),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -76,53 +89,54 @@ class ProjectView extends GetView<ProjectController> {
           children: [
             Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 children: [
                   TextFormField(
                     controller: profileIdController,
-                    decoration: const InputDecoration(labelText: 'Profile ID'),
+                    decoration: InputDecoration(labelText: 'profile_id'.tr),
                     keyboardType: TextInputType.number,
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    validator: FormValidators.numeric,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'title_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'description_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   TextFormField(
                     controller: linkController,
-                    decoration: const InputDecoration(labelText: 'Link'),
-                    validator: (value) =>
-                        (value == null || value.isEmpty) ? 'Required' : null,
+                    decoration: InputDecoration(labelText: 'link_label'.tr),
+                    validator: FormValidators.requiredField,
+                    onChanged: (_) => _updateFormValidity(),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      ElevatedButton(
-                        onPressed: _submit,
-                        child: Obx(
-                          () => Text(
-                            editingProject.value == null ? 'Save' : 'Update',
-                          ),
-                        ),
-                      ),
+                      Obx(() => ElevatedButton(
+                            onPressed: isFormValid.value ? _submit : null,
+                            child: Text(
+                              editingProject.value == null
+                                  ? 'save'.tr
+                                  : 'update'.tr,
+                            ),
+                          )),
                       const SizedBox(width: 8),
                       TextButton(
                         onPressed: _resetForm,
-                        child: const Text('Clear'),
+                        child: Text('clear'.tr),
                       ),
                       const SizedBox(width: 8),
                       OutlinedButton(
                         onPressed: _loadList,
-                        child: const Text('Load List'),
+                        child: Text('load_list'.tr),
                       ),
                     ],
                   ),
@@ -130,16 +144,16 @@ class ProjectView extends GetView<ProjectController> {
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'Projects',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'projects'.tr,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Obx(() {
               final projects = controller.projects;
 
               if (projects.isEmpty) {
-                return const Text('No projects found.');
+                return Text('no_projects'.tr);
               }
 
               return ListView.builder(
