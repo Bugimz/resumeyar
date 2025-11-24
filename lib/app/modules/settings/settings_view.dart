@@ -152,85 +152,181 @@ class _SettingsViewState extends State<SettingsView> {
       ),
       body: Obx(() {
         final isPremium = _premiumService.isPremium.value;
-        return Padding(
+        return ListView(
           padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Card(
-                color: isPremium ? Colors.green.shade50 : Colors.amber.shade50,
-                child: ListTile(
-                  leading: Icon(
-                    isPremium ? Icons.verified : Icons.workspace_premium,
-                    color: isPremium ? Colors.green : Colors.amber,
-                  ),
-                  title: Text(
-                    isPremium ? 'premium_active_title'.tr : 'premium_title'.tr,
-                  ),
-                  subtitle: Text(
-                    isPremium
-                        ? 'premium_active_message'.tr
-                        : 'premium_backup_message'.tr,
-                  ),
-                  trailing: isPremium
-                      ? null
-                      : ElevatedButton(
-                          onPressed: _premiumService.buyPremium,
-                          child: Text('upgrade_now'.tr),
-                        ),
-                ),
-              ),
-              ElevatedButton.icon(
-                onPressed: _saveBackup,
-                icon: const Icon(Icons.save_alt),
-                label: Text('save_backup'.tr),
-              ),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                onPressed: _restoreBackup,
-                icon: const Icon(Icons.restore),
-                label: Text('restore_backup'.tr),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'resume_section_order'.tr,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'drag_to_reorder_sections'.tr,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 12),
-              if (_isLoading)
-                const Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else
-                Expanded(
-                  child: Card(
-                    child: ReorderableListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: _sectionOrder.length,
-                      onReorder: _onReorder,
-                      itemBuilder: (context, index) {
-                        final section = _sectionOrder[index];
-                        return ListTile(
-                          key: ValueKey(section.name),
-                          leading: const Icon(Icons.drag_indicator),
-                          title: Text(section.localizedLabel),
-                          trailing: const Icon(Icons.more_vert),
-                        );
-                      },
+          children: [
+            _SettingsHero(isPremium: isPremium, onUpgrade: _premiumService.buyPremium),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'save_backup'.tr,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
                     ),
-                  ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'premium_backup_message'.tr,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    FilledButton.icon(
+                      onPressed: _saveBackup,
+                      icon: const Icon(Icons.save_alt),
+                      label: Text('save_backup'.tr),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    FilledButton.icon(
+                      onPressed: _restoreBackup,
+                      icon: const Icon(Icons.restore),
+                      label: Text('restore_backup'.tr),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
-          ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'resume_section_order'.tr,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'drag_to_reorder_sections'.tr,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            if (_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else
+              Card(
+                child: ReorderableListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _sectionOrder.length,
+                  onReorder: _onReorder,
+                  itemBuilder: (context, index) {
+                    final section = _sectionOrder[index];
+                    return ListTile(
+                      key: ValueKey(section.name),
+                      leading: const Icon(Icons.drag_indicator),
+                      title: Text(section.localizedLabel),
+                      trailing: const Icon(Icons.more_vert),
+                    );
+                  },
+                ),
+              ),
+          ],
         );
       }),
+    );
+  }
+}
+
+class _SettingsHero extends StatelessWidget {
+  const _SettingsHero({required this.isPremium, required this.onUpgrade});
+
+  final bool isPremium;
+  final Future<void> Function() onUpgrade;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withOpacity(0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isPremium ? Icons.verified : Icons.workspace_premium,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isPremium ? 'premium_active_title'.tr : 'premium_title'.tr,
+                      style: theme.textTheme.titleMedium
+                          ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isPremium
+                      ? 'hero_premium_body'.tr
+                      : 'premium_backup_message'.tr,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: Colors.white.withOpacity(0.9)),
+                ),
+                const SizedBox(height: 12),
+                if (!isPremium)
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                    onPressed: onUpgrade,
+                    child: Text('upgrade_now'.tr),
+                  )
+                else
+                  Text(
+                    'premium_active_message'.tr,
+                    style: theme.textTheme.labelMedium
+                        ?.copyWith(color: Colors.white.withOpacity(0.9)),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            height: 72,
+            width: 72,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.16),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: const Icon(Icons.security_outlined, color: Colors.white),
+          )
+        ],
+      ),
     );
   }
 }
