@@ -26,6 +26,12 @@ class SkillRepository {
     return result.map((map) => Skill.fromMap(map)).toList();
   }
 
+  Future<List<Skill>> getAll() async {
+    final db = await DatabaseProvider.instance.database;
+    final result = await db.query(tableName);
+    return result.map((map) => Skill.fromMap(map)).toList();
+  }
+
   Future<int> update(Skill skill) async {
     final db = await DatabaseProvider.instance.database;
     return db.update(

@@ -126,6 +126,7 @@ class HomeView extends StatelessWidget {
               const _NavigationTile(title: 'education', route: Routes.education),
               const _NavigationTile(title: 'skills', route: Routes.skills),
               const _NavigationTile(title: 'projects', route: Routes.projects),
+              const _NavigationTile(title: 'settings', route: Routes.settings),
             ],
           ),
         ),

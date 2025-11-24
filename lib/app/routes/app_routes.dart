@@ -8,4 +8,5 @@ abstract class Routes {
   static const education = '/education';
   static const skills = '/skills';
   static const projects = '/projects';
+  static const settings = '/settings';
 }
