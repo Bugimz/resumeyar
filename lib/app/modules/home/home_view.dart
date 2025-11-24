@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../routes/app_pages.dart';
 import '../../services/pdf_service.dart';
+import '../../theme/theme_controller.dart';
 import '../../data/repositories/education_repository.dart';
 import '../../data/repositories/project_repository.dart';
 import '../../data/repositories/resume_profile_repository.dart';
@@ -20,6 +21,8 @@ class HomeView extends StatelessWidget {
     projectRepository: ProjectRepository(),
   );
 
+  final ThemeController _themeController = Get.find<ThemeController>();
+
   Future<void> _downloadPdf() async {
     try {
       await _pdfService.shareResumePdf();
@@ -34,6 +37,18 @@ class HomeView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('ResumeYar'),
+        actions: [
+          Obx(
+            () => IconButton(
+              icon: Icon(
+                _themeController.isDarkMode
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
+              ),
+              onPressed: _themeController.toggleTheme,
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
