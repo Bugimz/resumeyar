@@ -40,10 +40,11 @@ class BillingService {
 
   Future<void> _connect() async {
     try {
-      _connected = await FlutterPoolakey.connect(
+      await FlutterPoolakey.connect(
         rsaPublicKey,
         onDisconnected: _handleDisconnect,
       );
+      _connected = true;
     } catch (error, stackTrace) {
       _connected = false;
       debugPrint('Poolakey connection failed: $error');
