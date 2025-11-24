@@ -13,4 +13,7 @@ const Map<String, String> enUS = {
   'language': 'Language',
   'english': 'English',
   'persian': 'Persian',
+  'template': 'Template',
+  'template_minimal': 'Minimal',
+  'template_modern': 'Modern',
 };

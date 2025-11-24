@@ -23,15 +23,19 @@ class HomeView extends StatelessWidget {
 
   final ThemeController _themeController = Get.find<ThemeController>();
   final Rx<Locale> _locale = Rx<Locale>(Get.locale ?? const Locale('en', 'US'));
+  final Rx<ResumeTemplate> _selectedTemplate = ResumeTemplate.minimal.obs;
 
   final List<Locale> _supportedLocales = const [
     Locale('en', 'US'),
     Locale('fa', 'IR'),
   ];
 
-  Future<void> _downloadPdf() async {
+  Future<void> _downloadPdf(bool isRtl) async {
     try {
-      await _pdfService.shareResumePdf();
+      await _pdfService.shareResumePdf(
+        template: _selectedTemplate.value,
+        isRtl: isRtl,
+      );
       Get.snackbar('success'.tr, 'resume_pdf_generated'.tr);
     } catch (e) {
       Get.snackbar('error'.tr, 'failed_generate_pdf'.trParams({'error': '$e'}));
@@ -88,8 +92,30 @@ class HomeView extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              DropdownButtonFormField<ResumeTemplate>(
+                value: _selectedTemplate.value,
+                decoration: InputDecoration(labelText: 'template'.tr),
+                items: ResumeTemplate.values
+                    .map(
+                      (template) => DropdownMenuItem<ResumeTemplate>(
+                        value: template,
+                        child: Text(
+                          template == ResumeTemplate.minimal
+                              ? 'template_minimal'.tr
+                              : 'template_modern'.tr,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (template) {
+                  if (template != null) {
+                    _selectedTemplate.value = template;
+                  }
+                },
+              ),
+              const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: _downloadPdf,
+                onPressed: () => _downloadPdf(isRtl),
                 icon: const Icon(Icons.picture_as_pdf),
                 label: Text('download_pdf'.tr),
               ),
