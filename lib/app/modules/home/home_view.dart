@@ -2,9 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../routes/app_pages.dart';
+import '../../services/pdf_service.dart';
+import '../../data/repositories/education_repository.dart';
+import '../../data/repositories/project_repository.dart';
+import '../../data/repositories/resume_profile_repository.dart';
+import '../../data/repositories/skill_repository.dart';
+import '../../data/repositories/work_experience_repository.dart';
 
 class HomeView extends StatelessWidget {
-  const HomeView({super.key});
+  HomeView({super.key});
+
+  final PdfService _pdfService = PdfService(
+    resumeProfileRepository: ResumeProfileRepository(),
+    workExperienceRepository: WorkExperienceRepository(),
+    educationRepository: EducationRepository(),
+    skillRepository: SkillRepository(),
+    projectRepository: ProjectRepository(),
+  );
+
+  Future<void> _downloadPdf() async {
+    try {
+      await _pdfService.shareResumePdf();
+      Get.snackbar('Success', 'Resume PDF generated');
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to generate PDF: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,12 +37,18 @@ class HomeView extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
-          _NavigationTile(title: 'Profile', route: Routes.profile),
-          _NavigationTile(title: 'Work Experience', route: Routes.work),
-          _NavigationTile(title: 'Education', route: Routes.education),
-          _NavigationTile(title: 'Skills', route: Routes.skills),
-          _NavigationTile(title: 'Projects', route: Routes.projects),
+        children: [
+          ElevatedButton.icon(
+            onPressed: _downloadPdf,
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('دانلود PDF'),
+          ),
+          const SizedBox(height: 16),
+          const _NavigationTile(title: 'Profile', route: Routes.profile),
+          const _NavigationTile(title: 'Work Experience', route: Routes.work),
+          const _NavigationTile(title: 'Education', route: Routes.education),
+          const _NavigationTile(title: 'Skills', route: Routes.skills),
+          const _NavigationTile(title: 'Projects', route: Routes.projects),
         ],
       ),
     );
