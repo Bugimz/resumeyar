@@ -23,7 +23,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -34,7 +34,9 @@ class DatabaseProvider {
             fullName TEXT NOT NULL,
             email TEXT NOT NULL,
             phone TEXT NOT NULL,
-            summary TEXT NOT NULL
+            summary TEXT NOT NULL,
+            imagePath TEXT,
+            signaturePath TEXT
           )
         ''');
 
@@ -85,6 +87,12 @@ class DatabaseProvider {
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('ALTER TABLE resume_profiles ADD COLUMN imagePath TEXT');
+          await db.execute('ALTER TABLE resume_profiles ADD COLUMN signaturePath TEXT');
+        }
       },
     );
   }

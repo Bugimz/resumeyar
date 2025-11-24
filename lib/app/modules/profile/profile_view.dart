@@ -1,5 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../data/models/resume_profile.dart';
 import 'profile_controller.dart';
@@ -13,6 +17,7 @@ class ProfileView extends GetView<ProfileController> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController summaryController = TextEditingController();
   final Rxn<ResumeProfile> editingProfile = Rxn<ResumeProfile>();
+  final RxnString imagePath = RxnString();
 
   void _resetForm() {
     editingProfile.value = null;
@@ -20,6 +25,7 @@ class ProfileView extends GetView<ProfileController> {
     emailController.clear();
     phoneController.clear();
     summaryController.clear();
+    imagePath.value = null;
   }
 
   Future<void> _submit() async {
@@ -33,6 +39,8 @@ class ProfileView extends GetView<ProfileController> {
       email: emailController.text,
       phone: phoneController.text,
       summary: summaryController.text,
+      imagePath: imagePath.value,
+      signaturePath: editingProfile.value?.signaturePath,
     );
 
     if (editingProfile.value == null) {
@@ -42,6 +50,21 @@ class ProfileView extends GetView<ProfileController> {
     }
 
     _resetForm();
+  }
+
+  Future<void> _pickImage() async {
+    final photosStatus = await Permission.photos.request();
+    final storageStatus = await Permission.storage.request();
+
+    if (!photosStatus.isGranted && !storageStatus.isGranted) {
+      return;
+    }
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      imagePath.value = pickedFile.path;
+    }
   }
 
   @override
@@ -82,6 +105,50 @@ class ProfileView extends GetView<ProfileController> {
                     decoration: const InputDecoration(labelText: 'Summary'),
                     validator: (value) =>
                         (value == null || value.isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _pickImage,
+                        icon: const Icon(Icons.image),
+                        label: const Text('Select Image'),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Obx(() {
+                          final path = imagePath.value;
+                          if (path == null || path.isEmpty) {
+                            return const Text('No image selected');
+                          }
+                          return Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade300),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Image.file(
+                                  File(path),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  path,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          );
+                        }),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -137,12 +204,13 @@ class ProfileView extends GetView<ProfileController> {
                           IconButton(
                             icon: const Icon(Icons.edit),
                             onPressed: () {
-                              editingProfile.value = profile;
-                              fullNameController.text = profile.fullName;
-                              emailController.text = profile.email;
-                              phoneController.text = profile.phone;
-                              summaryController.text = profile.summary;
-                            },
+                            editingProfile.value = profile;
+                            fullNameController.text = profile.fullName;
+                            emailController.text = profile.email;
+                            phoneController.text = profile.phone;
+                            summaryController.text = profile.summary;
+                            imagePath.value = profile.imagePath;
+                          },
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete),
