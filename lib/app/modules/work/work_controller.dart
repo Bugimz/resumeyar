@@ -8,15 +8,34 @@ class WorkController extends GetxController {
 
   final WorkExperienceRepository repository;
 
-  Future<List<WorkExperience>> load(int profileId) {
-    return repository.getByProfile(profileId);
+  final works = <WorkExperience>[].obs;
+  int? lastProfileId;
+
+  @override
+  void onInit() {
+    super.onInit();
+    load(1);
   }
 
-  Future<int> save(WorkExperience experience) {
-    return repository.create(experience);
+  Future<void> load(int profileId) async {
+    lastProfileId = profileId;
+    works.assignAll(await repository.getByProfile(profileId));
   }
 
-  Future<int> update(WorkExperience experience) {
-    return repository.update(experience);
+  Future<void> save(WorkExperience experience) async {
+    await repository.create(experience);
+    await load(experience.profileId);
+  }
+
+  Future<void> update(WorkExperience experience) async {
+    await repository.update(experience);
+    await load(experience.profileId);
+  }
+
+  Future<void> delete(int id) async {
+    await repository.delete(id);
+    if (lastProfileId != null) {
+      await load(lastProfileId!);
+    }
   }
 }

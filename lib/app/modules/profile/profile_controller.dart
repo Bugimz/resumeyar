@@ -8,15 +8,33 @@ class ProfileController extends GetxController {
 
   final ResumeProfileRepository repository;
 
-  Future<List<ResumeProfile>> load() {
-    return repository.getAll();
+  final profiles = <ResumeProfile>[].obs;
+  final isLoading = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadProfiles();
   }
 
-  Future<int> save(ResumeProfile profile) {
-    return repository.create(profile);
+  Future<void> loadProfiles() async {
+    isLoading.value = true;
+    profiles.assignAll(await repository.getAll());
+    isLoading.value = false;
   }
 
-  Future<int> update(ResumeProfile profile) {
-    return repository.update(profile);
+  Future<void> saveProfile(ResumeProfile profile) async {
+    await repository.create(profile);
+    await loadProfiles();
+  }
+
+  Future<void> updateProfile(ResumeProfile profile) async {
+    await repository.update(profile);
+    await loadProfiles();
+  }
+
+  Future<void> deleteProfile(int id) async {
+    await repository.delete(id);
+    await loadProfiles();
   }
 }

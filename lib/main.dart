@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'app/routes/app_pages.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -12,30 +14,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'ResumeYar',
-      initialRoute: '/home',
-      getPages: const [
-        GetPage(
-          name: '/home',
-          page: HomePage.new,
-        ),
-      ],
-      home: const HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-      ),
-      body: const Center(
-        child: Text('Welcome to ResumeYar!'),
-      ),
+      initialRoute: AppPages.initial,
+      getPages: AppPages.routes,
     );
   }
 }
