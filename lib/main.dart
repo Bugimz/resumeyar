@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'app/lang/en_US.dart';
 import 'app/lang/fa_IR.dart';
 import 'app/routes/app_pages.dart';
+import 'app/services/premium_service.dart';
 import 'app/theme/dark_theme.dart';
 import 'app/theme/light_theme.dart';
 import 'app/theme/theme_controller.dart';
@@ -21,6 +22,10 @@ Future<void> main() async {
 
   final ThemeController themeController = Get.put(ThemeController());
   await themeController.loadTheme();
+
+  final PremiumService premiumService =
+      Get.put(PremiumService(), permanent: true);
+  await premiumService.init();
 
   runApp(MyApp(themeController: themeController));
 }

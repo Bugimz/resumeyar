@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../routes/app_pages.dart';
 import '../../services/pdf_service.dart';
+import '../../services/premium_service.dart';
 import '../../theme/theme_controller.dart';
 import '../../data/repositories/education_repository.dart';
 import '../../data/repositories/project_repository.dart';
@@ -22,6 +23,7 @@ class HomeView extends StatelessWidget {
   );
 
   final ThemeController _themeController = Get.find<ThemeController>();
+  final PremiumService _premiumService = Get.find<PremiumService>();
   final Rx<Locale> _locale = Rx<Locale>(Get.locale ?? const Locale('en', 'US'));
   final Rx<ResumeTemplate> _selectedTemplate = ResumeTemplate.minimal.obs;
 
@@ -46,6 +48,7 @@ class HomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(() {
       final isRtl = _locale.value.languageCode == 'fa';
+      final isPremium = _premiumService.isPremium.value;
 
       return Directionality(
         textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
@@ -92,6 +95,11 @@ class HomeView extends StatelessWidget {
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              _GoldBanner(
+                onUpgrade: _premiumService.buyPremium,
+                isPremium: isPremium,
+              ),
+              const SizedBox(height: 12),
               DropdownButtonFormField<ResumeTemplate>(
                 value: _selectedTemplate.value,
                 decoration: InputDecoration(labelText: 'template'.tr),
@@ -99,18 +107,24 @@ class HomeView extends StatelessWidget {
                     .map(
                       (template) => DropdownMenuItem<ResumeTemplate>(
                         value: template,
+                        enabled: isPremium || template != ResumeTemplate.elegant,
                         child: Text(
-                          template == ResumeTemplate.minimal
-                              ? 'template_minimal'.tr
-                              : 'template_modern'.tr,
+                          switch (template) {
+                            ResumeTemplate.minimal => 'template_minimal'.tr,
+                            ResumeTemplate.modern => 'template_modern'.tr,
+                            ResumeTemplate.elegant => 'template_elegant'.tr,
+                          },
                         ),
                       ),
                     )
                     .toList(),
                 onChanged: (template) {
-                  if (template != null) {
-                    _selectedTemplate.value = template;
+                  if (template == null) return;
+                  if (template == ResumeTemplate.elegant && !isPremium) {
+                    Get.snackbar('premium_required'.tr, 'premium_template'.tr);
+                    return;
                   }
+                  _selectedTemplate.value = template;
                 },
               ),
               const SizedBox(height: 16),
@@ -148,6 +162,40 @@ class _NavigationTile extends StatelessWidget {
         title: Text(title.tr),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Get.toNamed(route),
+      ),
+    );
+  }
+}
+
+class _GoldBanner extends StatelessWidget {
+  const _GoldBanner({required this.onUpgrade, required this.isPremium});
+
+  final Future<void> Function() onUpgrade;
+  final bool isPremium;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isPremium) {
+      return Card(
+        color: Colors.amber.shade50,
+        child: ListTile(
+          leading: const Icon(Icons.workspace_premium, color: Colors.amber),
+          title: Text('premium_active_title'.tr),
+          subtitle: Text('premium_active_message'.tr),
+        ),
+      );
+    }
+
+    return Card(
+      color: Colors.amber.shade50,
+      child: ListTile(
+        leading: const Icon(Icons.workspace_premium, color: Colors.amber),
+        title: Text('premium_title'.tr),
+        subtitle: Text('premium_subtitle'.tr),
+        trailing: ElevatedButton(
+          onPressed: onUpgrade,
+          child: Text('upgrade_now'.tr),
+        ),
       ),
     );
   }
