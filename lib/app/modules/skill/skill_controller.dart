@@ -8,15 +8,34 @@ class SkillController extends GetxController {
 
   final SkillRepository repository;
 
-  Future<List<Skill>> load(int profileId) {
-    return repository.getByProfile(profileId);
+  final skills = <Skill>[].obs;
+  int? lastProfileId;
+
+  @override
+  void onInit() {
+    super.onInit();
+    load(1);
   }
 
-  Future<int> save(Skill skill) {
-    return repository.create(skill);
+  Future<void> load(int profileId) async {
+    lastProfileId = profileId;
+    skills.assignAll(await repository.getByProfile(profileId));
   }
 
-  Future<int> update(Skill skill) {
-    return repository.update(skill);
+  Future<void> save(Skill skill) async {
+    await repository.create(skill);
+    await load(skill.profileId);
+  }
+
+  Future<void> update(Skill skill) async {
+    await repository.update(skill);
+    await load(skill.profileId);
+  }
+
+  Future<void> delete(int id) async {
+    await repository.delete(id);
+    if (lastProfileId != null) {
+      await load(lastProfileId!);
+    }
   }
 }

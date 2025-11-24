@@ -8,15 +8,34 @@ class ProjectController extends GetxController {
 
   final ProjectRepository repository;
 
-  Future<List<Project>> load(int profileId) {
-    return repository.getByProfile(profileId);
+  final projects = <Project>[].obs;
+  int? lastProfileId;
+
+  @override
+  void onInit() {
+    super.onInit();
+    load(1);
   }
 
-  Future<int> save(Project project) {
-    return repository.create(project);
+  Future<void> load(int profileId) async {
+    lastProfileId = profileId;
+    projects.assignAll(await repository.getByProfile(profileId));
   }
 
-  Future<int> update(Project project) {
-    return repository.update(project);
+  Future<void> save(Project project) async {
+    await repository.create(project);
+    await load(project.profileId);
+  }
+
+  Future<void> update(Project project) async {
+    await repository.update(project);
+    await load(project.profileId);
+  }
+
+  Future<void> delete(int id) async {
+    await repository.delete(id);
+    if (lastProfileId != null) {
+      await load(lastProfileId!);
+    }
   }
 }
