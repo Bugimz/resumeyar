@@ -1,69 +1,72 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_poolakey/flutter_poolakey.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BillingService {
-  BillingService({Poolakey? poolakey}) : _poolakey = poolakey ?? Poolakey();
-
   static const String premiumSku = 'resumeyar_premium';
   static const String _premiumKey = 'premium_unlocked';
   static const String rsaPublicKey = 'REPLACE_WITH_YOUR_RSA_PUBLIC_KEY';
 
-  final Poolakey _poolakey;
-  dynamic _connection;
+  bool _connected = false;
 
   Future<void> init() async {
-    final config = const PaymentConfiguration(rsaPublicKey: rsaPublicKey);
-
-    try {
-      _connection = await _poolakey.connect(config);
+    await _connect();
+    if (_connected) {
       await _restorePurchases();
-    } catch (error, stackTrace) {
-      debugPrint('Poolakey connection failed: $error');
-      debugPrint('$stackTrace');
     }
   }
 
   Future<void> buyPremium() async {
     await _ensureConnected();
+    if (!_connected) {
+      return;
+    }
 
     try {
-      final purchaseResult = await (_connection?.purchase?.call(
-            productId: premiumSku,
-            skuType: SkuType.inApp,
-          )) ??
-          await (_connection?.purchaseProduct?.call(
-            productId: premiumSku,
-            skuType: SkuType.inApp,
-          ));
+      final purchase = await FlutterPoolakey.purchase(premiumSku);
 
-      if (_isSuccessfulPurchase(purchaseResult)) {
+      if (_isSuccessfulPurchase(purchase)) {
         await _markPremiumUnlocked();
       }
+    } on PlatformException catch (error, stackTrace) {
+      debugPrint('Premium purchase failed: ${error.message}');
+      debugPrint('$stackTrace');
     } catch (error, stackTrace) {
       debugPrint('Premium purchase failed: $error');
       debugPrint('$stackTrace');
     }
   }
 
+  Future<void> _connect() async {
+    try {
+      _connected = await FlutterPoolakey.connect(
+        rsaPublicKey,
+        onDisconnected: _handleDisconnect,
+      );
+    } catch (error, stackTrace) {
+      _connected = false;
+      debugPrint('Poolakey connection failed: $error');
+      debugPrint('$stackTrace');
+    }
+  }
+
   Future<void> _restorePurchases() async {
     try {
-      final purchases = await (_connection?.getPurchasedProducts?.call(
-            skuType: SkuType.inApp,
-          )) ??
-          await (_connection?.getPurchases?.call(
-            SkuType.inApp,
-          ));
+      final purchases = await FlutterPoolakey.getAllPurchasedProducts();
 
-      final hasPremiumPurchase = (purchases as List?)?.any((purchase) {
-            final productId = (purchase as dynamic).productId as String?;
-            return productId == premiumSku && _isSuccessfulPurchase(purchase);
-          }) ??
-          false;
+      final hasPremiumPurchase = purchases.any(
+        (purchase) =>
+            purchase.productId == premiumSku &&
+            _isSuccessfulPurchase(purchase),
+      );
 
       if (hasPremiumPurchase) {
         await _markPremiumUnlocked();
       }
+    } on PlatformException catch (error, stackTrace) {
+      debugPrint('Failed to restore purchases: ${error.message}');
+      debugPrint('$stackTrace');
     } catch (error, stackTrace) {
       debugPrint('Failed to restore purchases: $error');
       debugPrint('$stackTrace');
@@ -80,50 +83,19 @@ class BillingService {
     return prefs.getBool(_premiumKey) ?? false;
   }
 
-  bool _isSuccessfulPurchase(dynamic purchase) {
-    if (purchase == null) {
-      return false;
-    }
-
-    if (purchase is bool) {
-      return purchase;
-    }
-
-    final purchaseState = _readPurchaseState(purchase);
-    if (purchaseState == null) {
-      return true;
-    }
-
-    return purchaseState == 'purchased' || purchaseState == 'completed';
-  }
-
-  String? _readPurchaseState(dynamic purchase) {
-    try {
-      final state = (purchase as dynamic).purchaseState;
-      if (state == null) {
-        return null;
-      }
-
-      final stateName = state.toString().toLowerCase();
-      if (stateName.contains('purchased')) {
-        return 'purchased';
-      }
-
-      if (stateName.contains('complete')) {
-        return 'completed';
-      }
-
-      return stateName;
-    } catch (_) {
-      return null;
-    }
+  bool _isSuccessfulPurchase(PurchaseInfo purchase) {
+    return purchase.purchaseState == PurchaseState.PURCHASED;
   }
 
   Future<void> _ensureConnected() async {
-    if (_connection != null) {
+    if (_connected) {
       return;
     }
 
-    await init();
+    await _connect();
+  }
+
+  void _handleDisconnect() {
+    _connected = false;
   }
 }
