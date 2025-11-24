@@ -4,6 +4,8 @@ class ResumeProfile {
   final String email;
   final String phone;
   final String summary;
+  final String? imagePath;
+  final String? signaturePath;
 
   const ResumeProfile({
     this.id,
@@ -11,6 +13,8 @@ class ResumeProfile {
     required this.email,
     required this.phone,
     required this.summary,
+    this.imagePath,
+    this.signaturePath,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +24,8 @@ class ResumeProfile {
       'email': email,
       'phone': phone,
       'summary': summary,
+      'imagePath': imagePath,
+      'signaturePath': signaturePath,
     };
   }
 
@@ -30,6 +36,8 @@ class ResumeProfile {
       email: map['email'] as String,
       phone: map['phone'] as String,
       summary: map['summary'] as String,
+      imagePath: map['imagePath'] as String?,
+      signaturePath: map['signaturePath'] as String?,
     );
   }
 }

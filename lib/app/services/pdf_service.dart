@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
@@ -116,6 +117,30 @@ class PdfService {
     );
   }
 
+  pw.Widget _buildProfileImage(String? path, {double size = 72}) {
+    if (path == null || path.isEmpty) {
+      return pw.SizedBox();
+    }
+
+    final file = File(path);
+    if (!file.existsSync()) {
+      return pw.SizedBox();
+    }
+
+    final image = pw.MemoryImage(file.readAsBytesSync());
+    return pw.Container(
+      width: size,
+      height: size,
+      decoration: pw.BoxDecoration(
+        shape: pw.BoxShape.circle,
+        border: pw.Border.all(color: PdfColors.grey300, width: 2),
+      ),
+      child: pw.ClipOval(
+        child: pw.Image(image, fit: pw.BoxFit.cover),
+      ),
+    );
+  }
+
   pw.Widget _buildProfileSection(ResumeProfile? profile, bool isRtl) {
     if (profile == null) {
       return pw.Column(
@@ -133,6 +158,13 @@ class PdfService {
           isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Profile', isRtl),
+        if (profile.imagePath != null)
+          pw.Align(
+            alignment:
+                isRtl ? pw.Alignment.centerRight : pw.Alignment.centerLeft,
+            child: _buildProfileImage(profile.imagePath, size: 80),
+          ),
+        if (profile.imagePath != null) pw.SizedBox(height: 12),
         pw.Text(
           profile.fullName,
           style: const pw.TextStyle(fontSize: 16),
@@ -363,37 +395,48 @@ class PdfService {
         color: PdfColors.blue100,
         borderRadius: pw.BorderRadius.circular(8),
       ),
-      child: pw.Column(
-        crossAxisAlignment:
-            isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
-          pw.Text(
-            profile.fullName,
-            style: pw.TextStyle(
-              fontSize: 22,
-              fontWeight: pw.FontWeight.bold,
+          if (profile.imagePath != null) ...[
+            _buildProfileImage(profile.imagePath, size: 90),
+            pw.SizedBox(width: 16),
+          ],
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment:
+                  isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  profile.fullName,
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                  textAlign: alignment,
+                ),
+                pw.SizedBox(height: 8),
+                pw.Row(
+                  mainAxisAlignment: isRtl
+                      ? pw.MainAxisAlignment.end
+                      : pw.MainAxisAlignment.start,
+                  children: [
+                    pw.Icon(pw.IconData(0xe0be), size: 14),
+                    pw.SizedBox(width: 6),
+                    pw.Text(profile.email),
+                    pw.SizedBox(width: 12),
+                    pw.Icon(pw.IconData(0xe0cd), size: 14),
+                    pw.SizedBox(width: 6),
+                    pw.Text(profile.phone),
+                  ],
+                ),
+                pw.SizedBox(height: 12),
+                pw.Text(
+                  profile.summary,
+                  textAlign: alignment,
+                ),
+              ],
             ),
-            textAlign: alignment,
-          ),
-          pw.SizedBox(height: 8),
-          pw.Row(
-            mainAxisAlignment: isRtl
-                ? pw.MainAxisAlignment.end
-                : pw.MainAxisAlignment.start,
-            children: [
-              pw.Icon(pw.IconData(0xe0be), size: 14),
-              pw.SizedBox(width: 6),
-              pw.Text(profile.email),
-              pw.SizedBox(width: 12),
-              pw.Icon(pw.IconData(0xe0cd), size: 14),
-              pw.SizedBox(width: 6),
-              pw.Text(profile.phone),
-            ],
-          ),
-          pw.SizedBox(height: 12),
-          pw.Text(
-            profile.summary,
-            textAlign: alignment,
           ),
         ],
       ),
