@@ -27,7 +27,7 @@ class ProjectController extends GetxController {
     await load(project.profileId);
   }
 
-  Future<void> update(Project project) async {
+  Future<void> updateProject(Project project) async {
     await repository.update(project);
     await load(project.profileId);
   }

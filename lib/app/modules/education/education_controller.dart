@@ -27,7 +27,7 @@ class EducationController extends GetxController {
     await load(education.profileId);
   }
 
-  Future<void> update(Education education) async {
+  Future<void> updateEducation(Education education) async {
     await repository.update(education);
     await load(education.profileId);
   }

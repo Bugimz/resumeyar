@@ -27,7 +27,7 @@ class WorkController extends GetxController {
     await load(experience.profileId);
   }
 
-  Future<void> update(WorkExperience experience) async {
+  Future<void> updateWork(WorkExperience experience) async {
     await repository.update(experience);
     await load(experience.profileId);
   }

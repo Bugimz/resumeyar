@@ -18,11 +18,11 @@ final ThemeData lightTheme = ThemeData(
     backgroundColor: Colors.white,
     foregroundColor: Colors.black87,
   ),
-  cardTheme: CardTheme(
+  cardTheme: const CardThemeData(
     elevation: 0,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(18),
-      side: const BorderSide(color: AppColors.cardStroke),
+      borderRadius: BorderRadius.all(Radius.circular(18)),
+      side: BorderSide(color: AppColors.cardStroke),
     ),
     color: Colors.white,
   ),

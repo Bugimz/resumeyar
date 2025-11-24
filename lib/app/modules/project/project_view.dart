@@ -70,7 +70,7 @@ class ProjectView extends GetView<ProjectController> {
     if (editingProject.value == null) {
       await controller.save(project);
     } else {
-      await controller.update(project);
+      await controller.updateProject(project);
     }
 
     _resetForm();

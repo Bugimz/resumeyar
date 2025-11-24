@@ -1,43 +1,53 @@
-import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:in_app_purchase_bazaar/in_app_purchase_bazaar.dart';
-import 'package:in_app_purchase_bazaar/in_app_purchase_bazaar_platform.dart';
+import 'package:flutter_poolakey/flutter_poolakey.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BillingService {
-  BillingService({InAppPurchase? inAppPurchase})
-      : _inAppPurchase = inAppPurchase ?? InAppPurchaseBazaar.instance;
+  BillingService({Poolakey? poolakey}) : _poolakey = poolakey ?? Poolakey();
 
   static const String premiumSku = 'resumeyar_premium';
   static const String _premiumKey = 'premium_unlocked';
+  static const String rsaPublicKey = 'REPLACE_WITH_YOUR_RSA_PUBLIC_KEY';
 
-  final InAppPurchase _inAppPurchase;
-
-  Stream<List<PurchaseDetails>> get purchaseUpdates =>
-      _inAppPurchase.purchaseStream;
+  final dynamic _poolakey;
+  dynamic _connection;
 
   Future<void> init() async {
-    await InAppPurchaseBazaarPlatform.registerPlatform();
-    await _inAppPurchase.isAvailable();
+    final config = const PaymentConfiguration(rsaPublicKey: rsaPublicKey);
+    _connection = await _poolakey.connect(config);
+    await _restorePurchases();
   }
 
-  Future<List<ProductDetails>> queryProducts() async {
-    final response =
-        await _inAppPurchase.queryProductDetails({premiumSku});
-    return response.productDetails;
-  }
+  Future<void> buyPremium() async {
+    final purchaseResult = await (_connection?.purchase?.call(
+          productId: premiumSku,
+          skuType: SkuType.inApp,
+        )) ??
+        await (_connection?.purchaseProduct?.call(
+          productId: premiumSku,
+          skuType: SkuType.inApp,
+        ));
 
-  Future<void> buyPremium(ProductDetails product) async {
-    final purchaseParam = PurchaseParam(productDetails: product);
-    await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
-  }
-
-  Future<void> handlePurchase(PurchaseDetails purchase) async {
-    if (purchase.status == PurchaseStatus.purchased ||
-        purchase.status == PurchaseStatus.restored) {
+    if (purchaseResult != null) {
       await _markPremiumUnlocked();
     }
-    if (purchase.pendingCompletePurchase) {
-      await _inAppPurchase.completePurchase(purchase);
+  }
+
+  Future<void> _restorePurchases() async {
+    final purchases = await (_connection?.getPurchasedProducts?.call(
+          skuType: SkuType.inApp,
+        )) ??
+        await (_connection?.getPurchases?.call(
+          SkuType.inApp,
+        ));
+
+    final hasPremiumPurchase = (purchases as List?)?.any((purchase) {
+          final productId = (purchase as dynamic).productId as String?;
+          return productId == premiumSku;
+        }) ??
+        false;
+
+    if (hasPremiumPurchase) {
+      await _markPremiumUnlocked();
     }
   }
 
