@@ -67,7 +67,7 @@ class SkillView extends GetView<SkillController> {
     if (editingSkill.value == null) {
       await controller.save(skill);
     } else {
-      await controller.update(skill);
+      await controller.updateSkill(skill);
     }
 
     _resetForm();

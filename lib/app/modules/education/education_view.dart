@@ -79,7 +79,7 @@ class EducationView extends GetView<EducationController> {
     if (editingEducation.value == null) {
       await controller.save(education);
     } else {
-      await controller.update(education);
+      await controller.updateEducation(education);
     }
 
     _resetForm();

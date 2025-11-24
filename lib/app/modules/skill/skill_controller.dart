@@ -27,7 +27,7 @@ class SkillController extends GetxController {
     await load(skill.profileId);
   }
 
-  Future<void> update(Skill skill) async {
+  Future<void> updateSkill(Skill skill) async {
     await repository.update(skill);
     await load(skill.profileId);
   }

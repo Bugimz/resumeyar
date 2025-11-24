@@ -76,7 +76,7 @@ class WorkView extends GetView<WorkController> {
     if (editingExperience.value == null) {
       await controller.save(experience);
     } else {
-      await controller.update(experience);
+      await controller.updateWork(experience);
     }
 
     _resetForm();
