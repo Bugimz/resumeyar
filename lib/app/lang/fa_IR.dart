@@ -17,6 +17,10 @@ const Map<String, String> faIR = {
   'template_minimal': 'ساده',
   'template_modern': 'مدرن',
   'settings': 'تنظیمات',
+  'resume_section_order': 'ترتیب بخش‌های رزومه',
+  'drag_to_reorder_sections':
+      'برای تغییر ترتیب نمایش در PDF بخش‌ها را جابه‌جا کنید.',
+  'sections_order_saved': 'ترتیب بخش‌ها ذخیره شد',
   'save_backup': 'ذخیره بک‌آپ',
   'restore_backup': 'بازیابی بک‌آپ',
   'select_backup_path': 'مسیر ذخیره فایل بک‌آپ را انتخاب کنید',

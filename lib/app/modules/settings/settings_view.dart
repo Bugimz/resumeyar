@@ -10,8 +10,10 @@ import '../../data/repositories/resume_profile_repository.dart';
 import '../../data/repositories/skill_repository.dart';
 import '../../data/repositories/work_experience_repository.dart';
 import '../../services/backup_service.dart';
+import '../../services/settings_service.dart';
+import '../../utils/resume_sections.dart';
 
-class SettingsView extends StatelessWidget {
+class SettingsView extends StatefulWidget {
   SettingsView({super.key});
 
   final BackupService _backupService = BackupService(
@@ -21,6 +23,16 @@ class SettingsView extends StatelessWidget {
     skillRepository: SkillRepository(),
     projectRepository: ProjectRepository(),
   );
+
+  @override
+  State<SettingsView> createState() => _SettingsViewState();
+}
+
+class _SettingsViewState extends State<SettingsView> {
+  final SettingsService _settingsService = SettingsService();
+
+  List<ResumeSection> _sectionOrder = ResumeSection.values.toList();
+  bool _isLoading = true;
 
   Future<void> _saveBackup() async {
     try {
@@ -70,6 +82,35 @@ class SettingsView extends StatelessWidget {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadSectionOrder();
+  }
+
+  Future<void> _loadSectionOrder() async {
+    final order = await _settingsService.loadResumeSectionOrder();
+    if (!mounted) return;
+    setState(() {
+      _sectionOrder = order;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _onReorder(int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    setState(() {
+      final section = _sectionOrder.removeAt(oldIndex);
+      _sectionOrder.insert(newIndex, section);
+    });
+
+    await _settingsService.saveResumeSectionOrder(_sectionOrder);
+    Get.snackbar('success'.tr, 'sections_order_saved'.tr);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -91,6 +132,42 @@ class SettingsView extends StatelessWidget {
               icon: const Icon(Icons.restore),
               label: Text('restore_backup'.tr),
             ),
+            const SizedBox(height: 24),
+            Text(
+              'resume_section_order'.tr,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'drag_to_reorder_sections'.tr,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            if (_isLoading)
+              const Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else
+              Expanded(
+                child: Card(
+                  child: ReorderableListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _sectionOrder.length,
+                    onReorder: _onReorder,
+                    itemBuilder: (context, index) {
+                      final section = _sectionOrder[index];
+                      return ListTile(
+                        key: ValueKey(section.name),
+                        leading: const Icon(Icons.drag_indicator),
+                        title: Text(section.localizedLabel),
+                        trailing: const Icon(Icons.more_vert),
+                      );
+                    },
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -15,6 +15,8 @@ import '../data/repositories/project_repository.dart';
 import '../data/repositories/resume_profile_repository.dart';
 import '../data/repositories/skill_repository.dart';
 import '../data/repositories/work_experience_repository.dart';
+import '../utils/resume_sections.dart';
+import 'settings_service.dart';
 
 enum ResumeTemplate { minimal, modern }
 
@@ -25,13 +27,15 @@ class PdfService {
     required this.educationRepository,
     required this.skillRepository,
     required this.projectRepository,
-  });
+    SettingsService? settingsService,
+  }) : settingsService = settingsService ?? SettingsService();
 
   final ResumeProfileRepository resumeProfileRepository;
   final WorkExperienceRepository workExperienceRepository;
   final EducationRepository educationRepository;
   final SkillRepository skillRepository;
   final ProjectRepository projectRepository;
+  final SettingsService settingsService;
 
   Future<Uint8List> generateResumePdf({
     required ResumeTemplate template,
@@ -43,6 +47,8 @@ class PdfService {
     final List<Education> educations = await educationRepository.getAll();
     final List<Skill> skills = await skillRepository.getAll();
     final List<Project> projects = await projectRepository.getAll();
+    final List<ResumeSection> sectionOrder =
+        await settingsService.loadResumeSectionOrder();
 
     final baseFont = await PdfGoogleFonts.vazirmatnRegular();
     final boldFont = await PdfGoogleFonts.vazirmatnBold();
@@ -68,6 +74,7 @@ class PdfService {
               skills,
               projects,
               isRtl,
+              sectionOrder,
             ),
           ResumeTemplate.modern => _buildModernTemplate(
               profile,
@@ -76,6 +83,7 @@ class PdfService {
               skills,
               projects,
               isRtl,
+              sectionOrder,
             ),
         },
       ),
@@ -352,14 +360,18 @@ class PdfService {
     List<Skill> skills,
     List<Project> projects,
     bool isRtl,
+    List<ResumeSection> sectionOrder,
   ) {
-    return [
-      _buildProfileSection(profile, isRtl),
-      _buildExperienceSection(workExperiences, isRtl),
-      _buildEducationSection(educations, isRtl),
-      _buildSkillSection(skills, isRtl),
-      _buildProjectSection(projects, isRtl),
-    ];
+    return _buildSectionsByOrder(
+      sectionOrder,
+      ResumeTemplate.minimal,
+      profile,
+      workExperiences,
+      educations,
+      skills,
+      projects,
+      isRtl,
+    );
   }
 
   List<pw.Widget> _buildModernTemplate(
@@ -369,21 +381,53 @@ class PdfService {
     List<Skill> skills,
     List<Project> projects,
     bool isRtl,
+    List<ResumeSection> sectionOrder,
   ) {
-    return [
-      if (profile != null)
-        _buildModernHeader(profile, isRtl)
-      else
-        _buildProfileSection(profile, isRtl),
-      pw.Divider(),
-      _buildExperienceSection(workExperiences, isRtl),
-      pw.Divider(),
-      _buildEducationSection(educations, isRtl),
-      pw.Divider(),
-      _buildSkillSection(skills, isRtl),
-      pw.Divider(),
-      _buildProjectSection(projects, isRtl),
-    ];
+    return _buildSectionsByOrder(
+      sectionOrder,
+      ResumeTemplate.modern,
+      profile,
+      workExperiences,
+      educations,
+      skills,
+      projects,
+      isRtl,
+    );
+  }
+
+  List<pw.Widget> _buildSectionsByOrder(
+    List<ResumeSection> sectionOrder,
+    ResumeTemplate template,
+    ResumeProfile? profile,
+    List<WorkExperience> workExperiences,
+    List<Education> educations,
+    List<Skill> skills,
+    List<Project> projects,
+    bool isRtl,
+  ) {
+    final List<pw.Widget> widgets = [];
+
+    for (var i = 0; i < sectionOrder.length; i++) {
+      final section = sectionOrder[i];
+      final sectionWidget = switch (section) {
+        ResumeSection.profile => template == ResumeTemplate.modern && profile != null
+            ? _buildModernHeader(profile, isRtl)
+            : _buildProfileSection(profile, isRtl),
+        ResumeSection.workExperience =>
+            _buildExperienceSection(workExperiences, isRtl),
+        ResumeSection.education => _buildEducationSection(educations, isRtl),
+        ResumeSection.skills => _buildSkillSection(skills, isRtl),
+        ResumeSection.projects => _buildProjectSection(projects, isRtl),
+      };
+
+      widgets.add(sectionWidget);
+
+      if (template == ResumeTemplate.modern && i != sectionOrder.length - 1) {
+        widgets.add(pw.Divider());
+      }
+    }
+
+    return widgets;
   }
 
   pw.Widget _buildModernHeader(ResumeProfile profile, bool isRtl) {
