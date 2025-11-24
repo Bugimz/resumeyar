@@ -13,4 +13,7 @@ const Map<String, String> faIR = {
   'language': 'زبان',
   'english': 'انگلیسی',
   'persian': 'فارسی',
+  'template': 'قالب',
+  'template_minimal': 'ساده',
+  'template_modern': 'مدرن',
 };
