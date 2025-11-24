@@ -26,6 +26,12 @@ class EducationRepository {
     return result.map((map) => Education.fromMap(map)).toList();
   }
 
+  Future<List<Education>> getAll() async {
+    final db = await DatabaseProvider.instance.database;
+    final result = await db.query(tableName);
+    return result.map((map) => Education.fromMap(map)).toList();
+  }
+
   Future<int> update(Education education) async {
     final db = await DatabaseProvider.instance.database;
     return db.update(

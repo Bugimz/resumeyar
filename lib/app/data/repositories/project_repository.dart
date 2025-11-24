@@ -26,6 +26,12 @@ class ProjectRepository {
     return result.map((map) => Project.fromMap(map)).toList();
   }
 
+  Future<List<Project>> getAll() async {
+    final db = await DatabaseProvider.instance.database;
+    final result = await db.query(tableName);
+    return result.map((map) => Project.fromMap(map)).toList();
+  }
+
   Future<int> update(Project project) async {
     final db = await DatabaseProvider.instance.database;
     return db.update(

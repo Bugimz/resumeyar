@@ -26,6 +26,12 @@ class WorkExperienceRepository {
     return result.map((map) => WorkExperience.fromMap(map)).toList();
   }
 
+  Future<List<WorkExperience>> getAll() async {
+    final db = await DatabaseProvider.instance.database;
+    final result = await db.query(tableName);
+    return result.map((map) => WorkExperience.fromMap(map)).toList();
+  }
+
   Future<int> update(WorkExperience experience) async {
     final db = await DatabaseProvider.instance.database;
     return db.update(

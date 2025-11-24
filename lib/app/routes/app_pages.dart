@@ -11,6 +11,7 @@ import '../modules/skill/skill_binding.dart';
 import '../modules/skill/skill_view.dart';
 import '../modules/work/work_binding.dart';
 import '../modules/work/work_view.dart';
+import '../modules/settings/settings_view.dart';
 
 part 'app_routes.dart';
 
@@ -45,6 +46,10 @@ class AppPages {
       name: Routes.projects,
       page: ProjectView.new,
       binding: ProjectBinding(),
+    ),
+    GetPage(
+      name: Routes.settings,
+      page: SettingsView.new,
     ),
   ];
 }
