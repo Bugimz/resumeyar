@@ -1,0 +1,16 @@
+const Map<String, String> faIR = {
+  'app_title': 'رزومه یار',
+  'download_pdf': 'دانلود PDF',
+  'profile': 'پروفایل',
+  'work_experience': 'سوابق کاری',
+  'education': 'تحصیلات',
+  'skills': 'مهارت‌ها',
+  'projects': 'پروژه‌ها',
+  'success': 'موفقیت',
+  'resume_pdf_generated': 'فایل PDF رزومه ایجاد شد',
+  'error': 'خطا',
+  'failed_generate_pdf': 'خطا در ایجاد PDF: @error',
+  'language': 'زبان',
+  'english': 'انگلیسی',
+  'persian': 'فارسی',
+};

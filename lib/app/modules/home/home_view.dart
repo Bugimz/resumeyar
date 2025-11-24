@@ -22,51 +22,89 @@ class HomeView extends StatelessWidget {
   );
 
   final ThemeController _themeController = Get.find<ThemeController>();
+  final Rx<Locale> _locale = Rx<Locale>(Get.locale ?? const Locale('en', 'US'));
+
+  final List<Locale> _supportedLocales = const [
+    Locale('en', 'US'),
+    Locale('fa', 'IR'),
+  ];
 
   Future<void> _downloadPdf() async {
     try {
       await _pdfService.shareResumePdf();
-      Get.snackbar('Success', 'Resume PDF generated');
+      Get.snackbar('success'.tr, 'resume_pdf_generated'.tr);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to generate PDF: $e');
+      Get.snackbar('error'.tr, 'failed_generate_pdf'.trParams({'error': '$e'}));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('ResumeYar'),
-        actions: [
-          Obx(
-            () => IconButton(
-              icon: Icon(
-                _themeController.isDarkMode
-                    ? Icons.light_mode_outlined
-                    : Icons.dark_mode_outlined,
+    return Obx(() {
+      final isRtl = _locale.value.languageCode == 'fa';
+
+      return Directionality(
+        textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('app_title'.tr),
+            actions: [
+              DropdownButtonHideUnderline(
+                child: DropdownButton<Locale>(
+                  value: _locale.value,
+                  icon: const Icon(Icons.language),
+                  onChanged: (locale) {
+                    if (locale != null) {
+                      _locale.value = locale;
+                      Get.updateLocale(locale);
+                    }
+                  },
+                  items: _supportedLocales
+                      .map(
+                        (locale) => DropdownMenuItem<Locale>(
+                          value: locale,
+                          child: Text(
+                            locale.languageCode == 'fa'
+                                ? 'persian'.tr
+                                : 'english'.tr,
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
               ),
-              onPressed: _themeController.toggleTheme,
-            ),
+              Obx(
+                () => IconButton(
+                  icon: Icon(
+                    _themeController.isDarkMode
+                        ? Icons.light_mode_outlined
+                        : Icons.dark_mode_outlined,
+                  ),
+                  onPressed: _themeController.toggleTheme,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          ElevatedButton.icon(
-            onPressed: _downloadPdf,
-            icon: const Icon(Icons.picture_as_pdf),
-            label: const Text('دانلود PDF'),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              ElevatedButton.icon(
+                onPressed: _downloadPdf,
+                icon: const Icon(Icons.picture_as_pdf),
+                label: Text('download_pdf'.tr),
+              ),
+              const SizedBox(height: 16),
+              const _NavigationTile(title: 'profile', route: Routes.profile),
+              const _NavigationTile(
+                  title: 'work_experience', route: Routes.work),
+              const _NavigationTile(title: 'education', route: Routes.education),
+              const _NavigationTile(title: 'skills', route: Routes.skills),
+              const _NavigationTile(title: 'projects', route: Routes.projects),
+            ],
           ),
-          const SizedBox(height: 16),
-          const _NavigationTile(title: 'Profile', route: Routes.profile),
-          const _NavigationTile(title: 'Work Experience', route: Routes.work),
-          const _NavigationTile(title: 'Education', route: Routes.education),
-          const _NavigationTile(title: 'Skills', route: Routes.skills),
-          const _NavigationTile(title: 'Projects', route: Routes.projects),
-        ],
-      ),
-    );
+        ),
+      );
+    });
   }
 }
 
@@ -80,7 +118,7 @@ class _NavigationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       child: ListTile(
-        title: Text(title),
+        title: Text(title.tr),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Get.toNamed(route),
       ),

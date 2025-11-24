@@ -1,0 +1,16 @@
+const Map<String, String> enUS = {
+  'app_title': 'ResumeYar',
+  'download_pdf': 'Download PDF',
+  'profile': 'Profile',
+  'work_experience': 'Work Experience',
+  'education': 'Education',
+  'skills': 'Skills',
+  'projects': 'Projects',
+  'success': 'Success',
+  'resume_pdf_generated': 'Resume PDF generated',
+  'error': 'Error',
+  'failed_generate_pdf': 'Failed to generate PDF: @error',
+  'language': 'Language',
+  'english': 'English',
+  'persian': 'Persian',
+};
