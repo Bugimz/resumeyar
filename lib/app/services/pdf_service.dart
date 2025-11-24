@@ -18,7 +18,7 @@ import '../data/repositories/work_experience_repository.dart';
 import '../utils/resume_sections.dart';
 import 'settings_service.dart';
 
-enum ResumeTemplate { minimal, modern }
+enum ResumeTemplate { minimal, modern, elegant }
 
 class PdfService {
   PdfService({
@@ -77,6 +77,15 @@ class PdfService {
               sectionOrder,
             ),
           ResumeTemplate.modern => _buildModernTemplate(
+              profile,
+              workExperiences,
+              educations,
+              skills,
+              projects,
+              isRtl,
+              sectionOrder,
+            ),
+          ResumeTemplate.elegant => _buildElegantTemplate(
               profile,
               workExperiences,
               educations,
@@ -395,6 +404,27 @@ class PdfService {
     );
   }
 
+  List<pw.Widget> _buildElegantTemplate(
+    ResumeProfile? profile,
+    List<WorkExperience> workExperiences,
+    List<Education> educations,
+    List<Skill> skills,
+    List<Project> projects,
+    bool isRtl,
+    List<ResumeSection> sectionOrder,
+  ) {
+    return _buildSectionsByOrder(
+      sectionOrder,
+      ResumeTemplate.elegant,
+      profile,
+      workExperiences,
+      educations,
+      skills,
+      projects,
+      isRtl,
+    );
+  }
+
   List<pw.Widget> _buildSectionsByOrder(
     List<ResumeSection> sectionOrder,
     ResumeTemplate template,
@@ -410,9 +440,13 @@ class PdfService {
     for (var i = 0; i < sectionOrder.length; i++) {
       final section = sectionOrder[i];
       final sectionWidget = switch (section) {
-        ResumeSection.profile => template == ResumeTemplate.modern && profile != null
-            ? _buildModernHeader(profile, isRtl)
-            : _buildProfileSection(profile, isRtl),
+        ResumeSection.profile => switch (template) {
+            ResumeTemplate.modern when profile != null =>
+              _buildModernHeader(profile, isRtl),
+            ResumeTemplate.elegant when profile != null =>
+              _buildElegantHeader(profile, isRtl),
+            _ => _buildProfileSection(profile, isRtl),
+          },
         ResumeSection.workExperience =>
             _buildExperienceSection(workExperiences, isRtl),
         ResumeSection.education => _buildEducationSection(educations, isRtl),
@@ -422,8 +456,17 @@ class PdfService {
 
       widgets.add(sectionWidget);
 
-      if (template == ResumeTemplate.modern && i != sectionOrder.length - 1) {
-        widgets.add(pw.Divider());
+      if (i != sectionOrder.length - 1) {
+        if (template == ResumeTemplate.modern) {
+          widgets.add(pw.Divider());
+        } else if (template == ResumeTemplate.elegant) {
+          widgets.add(
+            pw.Divider(
+              color: PdfColors.blueGrey300,
+              thickness: 0.7,
+            ),
+          );
+        }
       }
     }
 
@@ -478,6 +521,78 @@ class PdfService {
                 pw.Text(
                   profile.summary,
                   textAlign: alignment,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _buildElegantHeader(ResumeProfile profile, bool isRtl) {
+    final alignment = isRtl ? pw.TextAlign.right : pw.TextAlign.left;
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.all(18),
+      decoration: pw.BoxDecoration(
+        gradient: const pw.LinearGradient(
+          colors: [PdfColors.blueGrey900, PdfColors.blueGrey600],
+          begin: pw.Alignment.topLeft,
+          end: pw.Alignment.bottomRight,
+        ),
+        borderRadius: pw.BorderRadius.circular(10),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          if (profile.imagePath != null) ...[
+            _buildProfileImage(profile.imagePath, size: 88),
+            pw.SizedBox(width: 16),
+          ],
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment:
+                  isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  profile.fullName,
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                  textAlign: alignment,
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  profile.summary,
+                  style: const pw.TextStyle(
+                    color: PdfColors.white,
+                    fontSize: 12,
+                  ),
+                  textAlign: alignment,
+                ),
+                pw.SizedBox(height: 12),
+                pw.Row(
+                  mainAxisAlignment: isRtl
+                      ? pw.MainAxisAlignment.end
+                      : pw.MainAxisAlignment.start,
+                  children: [
+                    pw.Icon(pw.IconData(0xe0be), size: 12, color: PdfColors.white),
+                    pw.SizedBox(width: 6),
+                    pw.Text(
+                      profile.email,
+                      style: const pw.TextStyle(color: PdfColors.white),
+                    ),
+                    pw.SizedBox(width: 12),
+                    pw.Icon(pw.IconData(0xe0cd), size: 12, color: PdfColors.white),
+                    pw.SizedBox(width: 6),
+                    pw.Text(
+                      profile.phone,
+                      style: const pw.TextStyle(color: PdfColors.white),
+                    ),
+                  ],
                 ),
               ],
             ),
