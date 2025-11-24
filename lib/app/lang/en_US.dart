@@ -17,6 +17,10 @@ const Map<String, String> enUS = {
   'template_minimal': 'Minimal',
   'template_modern': 'Modern',
   'settings': 'Settings',
+  'resume_section_order': 'Resume section order',
+  'drag_to_reorder_sections':
+      'Drag sections to change the order used when generating PDFs.',
+  'sections_order_saved': 'Section order saved',
   'save_backup': 'Save backup',
   'restore_backup': 'Restore backup',
   'select_backup_path': 'Choose where to save the backup file',
