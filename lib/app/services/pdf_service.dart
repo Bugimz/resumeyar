@@ -158,6 +158,44 @@ class PdfService {
     );
   }
 
+  pw.Widget _buildContactRow(ResumeProfile profile, bool isRtl) {
+    final List<pw.Widget> items = [];
+
+    void addItem(String value, int iconCode) {
+      if (value.isEmpty) {
+        return;
+      }
+      items.add(
+        pw.Row(
+          mainAxisSize: pw.MainAxisSize.min,
+          children: [
+            pw.Icon(pw.IconData(iconCode), size: 12),
+            pw.SizedBox(width: 4),
+            pw.Text(value),
+          ],
+        ),
+      );
+    }
+
+    addItem(profile.location, 0xe0c8);
+    addItem(profile.email, 0xe0be);
+    addItem(profile.phone, 0xe0cd);
+    addItem(profile.portfolioUrl, 0xe0c9);
+    addItem(profile.linkedInUrl, 0xe80d);
+    addItem(profile.githubUrl, 0xe86f);
+
+    if (items.isEmpty) {
+      return pw.SizedBox();
+    }
+
+    return pw.Wrap(
+      spacing: 8,
+      runSpacing: 6,
+      alignment: isRtl ? pw.WrapAlignment.end : pw.WrapAlignment.start,
+      children: items,
+    );
+  }
+
   pw.Widget _buildProfileSection(ResumeProfile? profile, bool isRtl) {
     if (profile == null) {
       return pw.Column(
@@ -187,19 +225,22 @@ class PdfService {
           style: const pw.TextStyle(fontSize: 16),
           textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
         ),
-        pw.Text(
-          profile.email,
-          textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
-        ),
-        pw.Text(
-          profile.phone,
-          textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
-        ),
-        pw.SizedBox(height: 8),
+        if (profile.jobTitle.isNotEmpty)
+          pw.Text(
+            profile.jobTitle,
+            style: pw.TextStyle(
+              fontSize: 12,
+              color: PdfColors.grey800,
+              fontWeight: pw.FontWeight.bold,
+            ),
+            textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+          ),
         pw.Text(
           profile.summary,
           textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
         ),
+        pw.SizedBox(height: 8),
+        _buildContactRow(profile, isRtl),
         pw.SizedBox(height: 16),
       ],
     );
@@ -502,21 +543,32 @@ class PdfService {
                   ),
                   textAlign: alignment,
                 ),
+                if (profile.jobTitle.isNotEmpty) ...[
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    profile.jobTitle,
+                    style: pw.TextStyle(
+                      fontSize: 14,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                    textAlign: alignment,
+                  ),
+                ],
+                if (profile.location.isNotEmpty) ...[
+                  pw.SizedBox(height: 6),
+                  pw.Row(
+                    mainAxisAlignment: isRtl
+                        ? pw.MainAxisAlignment.end
+                        : pw.MainAxisAlignment.start,
+                    children: [
+                      pw.Icon(pw.IconData(0xe0c8), size: 12),
+                      pw.SizedBox(width: 6),
+                      pw.Text(profile.location),
+                    ],
+                  ),
+                ],
                 pw.SizedBox(height: 8),
-                pw.Row(
-                  mainAxisAlignment: isRtl
-                      ? pw.MainAxisAlignment.end
-                      : pw.MainAxisAlignment.start,
-                  children: [
-                    pw.Icon(pw.IconData(0xe0be), size: 14),
-                    pw.SizedBox(width: 6),
-                    pw.Text(profile.email),
-                    pw.SizedBox(width: 12),
-                    pw.Icon(pw.IconData(0xe0cd), size: 14),
-                    pw.SizedBox(width: 6),
-                    pw.Text(profile.phone),
-                  ],
-                ),
+                _buildContactRow(profile, isRtl),
                 pw.SizedBox(height: 12),
                 pw.Text(
                   profile.summary,
@@ -564,6 +616,18 @@ class PdfService {
                   ),
                   textAlign: alignment,
                 ),
+                if (profile.jobTitle.isNotEmpty) ...[
+                  pw.SizedBox(height: 6),
+                  pw.Text(
+                    profile.jobTitle,
+                    style: pw.TextStyle(
+                      color: PdfColors.white,
+                      fontWeight: pw.FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    textAlign: alignment,
+                  ),
+                ],
                 pw.SizedBox(height: 6),
                 pw.Text(
                   profile.summary,
@@ -574,26 +638,7 @@ class PdfService {
                   textAlign: alignment,
                 ),
                 pw.SizedBox(height: 12),
-                pw.Row(
-                  mainAxisAlignment: isRtl
-                      ? pw.MainAxisAlignment.end
-                      : pw.MainAxisAlignment.start,
-                  children: [
-                    pw.Icon(pw.IconData(0xe0be), size: 12, color: PdfColors.white),
-                    pw.SizedBox(width: 6),
-                    pw.Text(
-                      profile.email,
-                      style: const pw.TextStyle(color: PdfColors.white),
-                    ),
-                    pw.SizedBox(width: 12),
-                    pw.Icon(pw.IconData(0xe0cd), size: 12, color: PdfColors.white),
-                    pw.SizedBox(width: 6),
-                    pw.Text(
-                      profile.phone,
-                      style: const pw.TextStyle(color: PdfColors.white),
-                    ),
-                  ],
-                ),
+                _buildContactRow(profile, isRtl),
               ],
             ),
           ),

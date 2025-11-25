@@ -23,7 +23,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -32,9 +32,14 @@ class DatabaseProvider {
           CREATE TABLE resume_profiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fullName TEXT NOT NULL,
+            jobTitle TEXT NOT NULL DEFAULT '',
+            location TEXT NOT NULL DEFAULT '',
             email TEXT NOT NULL,
             phone TEXT NOT NULL,
             summary TEXT NOT NULL,
+            portfolioUrl TEXT NOT NULL DEFAULT '',
+            linkedInUrl TEXT NOT NULL DEFAULT '',
+            githubUrl TEXT NOT NULL DEFAULT '',
             imagePath TEXT,
             signaturePath TEXT
           )
@@ -92,6 +97,19 @@ class DatabaseProvider {
         if (oldVersion < 2) {
           await db.execute('ALTER TABLE resume_profiles ADD COLUMN imagePath TEXT');
           await db.execute('ALTER TABLE resume_profiles ADD COLUMN signaturePath TEXT');
+        }
+
+        if (oldVersion < 3) {
+          await db.execute(
+              "ALTER TABLE resume_profiles ADD COLUMN jobTitle TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE resume_profiles ADD COLUMN location TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE resume_profiles ADD COLUMN portfolioUrl TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE resume_profiles ADD COLUMN linkedInUrl TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE resume_profiles ADD COLUMN githubUrl TEXT NOT NULL DEFAULT ''");
         }
       },
     );
