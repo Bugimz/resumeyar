@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -25,7 +27,7 @@ Future<void> main() async {
 
   final PremiumService premiumService =
       Get.put(PremiumService(), permanent: true);
-  await premiumService.init();
+  unawaited(premiumService.init());
 
   runApp(MyApp(themeController: themeController));
 }

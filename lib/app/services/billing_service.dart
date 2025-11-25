@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_poolakey/flutter_poolakey.dart';
@@ -40,11 +42,16 @@ class BillingService {
 
   Future<void> _connect() async {
     try {
-      await FlutterPoolakey.connect(
-        rsaPublicKey,
-        onDisconnected: _handleDisconnect,
-      );
+      await FlutterPoolakey
+          .connect(
+            rsaPublicKey,
+            onDisconnected: _handleDisconnect,
+          )
+          .timeout(const Duration(seconds: 8));
       _connected = true;
+    } on TimeoutException {
+      _connected = false;
+      debugPrint('Poolakey connection timed out');
     } catch (error, stackTrace) {
       _connected = false;
       debugPrint('Poolakey connection failed: $error');
