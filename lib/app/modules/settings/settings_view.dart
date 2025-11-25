@@ -80,7 +80,7 @@ class _SettingsViewState extends State<SettingsView> {
         return;
       }
 
-      final backupContent = await _backupService.exportToJson();
+      final backupContent = await widget._backupService.exportToJson();
       final file = File(backupPath);
       await file.writeAsString(backupContent);
 
@@ -105,7 +105,7 @@ class _SettingsViewState extends State<SettingsView> {
       }
 
       final content = await File(filePath).readAsString();
-      await _backupService.importFromJson(content);
+      await widget._backupService.importFromJson(content);
 
       Get.snackbar('success'.tr, 'backup_restored'.tr);
     } on FormatException catch (e) {
