@@ -100,9 +100,14 @@ class BackupService {
       for (final map in profileMaps) {
         final profile = ResumeProfile(
           fullName: _requireString(map, 'fullName'),
+          jobTitle: _optionalString(map, 'jobTitle') ?? '',
+          location: _optionalString(map, 'location') ?? '',
           email: _requireString(map, 'email'),
           phone: _requireString(map, 'phone'),
           summary: _requireString(map, 'summary'),
+          portfolioUrl: _optionalString(map, 'portfolioUrl') ?? '',
+          linkedInUrl: _optionalString(map, 'linkedInUrl') ?? '',
+          githubUrl: _optionalString(map, 'githubUrl') ?? '',
           imagePath: _optionalString(map, 'imagePath'),
           signaturePath: _optionalString(map, 'signaturePath'),
         );
