@@ -25,9 +25,8 @@ Future<void> main() async {
   final ThemeController themeController = Get.put(ThemeController());
   await themeController.loadTheme();
 
-  final PremiumService premiumService =
-      Get.put(PremiumService(), permanent: true);
-  unawaited(premiumService.init());
+  // Register only; PremiumService initializes asynchronously inside onInit
+  Get.put(PremiumService(), permanent: true);
 
   runApp(MyApp(themeController: themeController));
 }
