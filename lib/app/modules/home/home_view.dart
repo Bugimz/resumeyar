@@ -603,6 +603,7 @@ class _NavigationGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tiles = const [
+      _NavigationTile(title: 'review', route: Routes.review, icon: Icons.fact_check_outlined),
       _NavigationTile(title: 'profile', route: Routes.profile, icon: Icons.person_outline),
       _NavigationTile(title: 'work_experience', route: Routes.work, icon: Icons.badge_outlined),
       _NavigationTile(title: 'education', route: Routes.education, icon: Icons.school_outlined),

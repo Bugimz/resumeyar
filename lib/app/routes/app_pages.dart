@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../modules/education/education_binding.dart';
 import '../modules/education/education_view.dart';
 import '../modules/home/home_view.dart';
+import '../modules/home/review_view.dart';
 import '../modules/interest/interest_binding.dart';
 import '../modules/interest/interest_view.dart';
 import '../modules/language/language_binding.dart';
@@ -28,6 +29,7 @@ class AppPages {
 
   static final routes = [
     GetPage(name: Routes.home, page: HomeView.new),
+    GetPage(name: Routes.review, page: ReviewView.new),
     GetPage(
       name: Routes.profile,
       page: ProfileView.new,
