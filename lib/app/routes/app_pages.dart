@@ -3,6 +3,11 @@ import 'package:get/get.dart';
 import '../modules/education/education_binding.dart';
 import '../modules/education/education_view.dart';
 import '../modules/home/home_view.dart';
+import '../modules/home/review_view.dart';
+import '../modules/interest/interest_binding.dart';
+import '../modules/interest/interest_view.dart';
+import '../modules/language/language_binding.dart';
+import '../modules/language/language_view.dart';
 import '../modules/profile/profile_binding.dart';
 import '../modules/profile/profile_view.dart';
 import '../modules/project/project_binding.dart';
@@ -12,6 +17,8 @@ import '../modules/skill/skill_view.dart';
 import '../modules/work/work_binding.dart';
 import '../modules/work/work_view.dart';
 import '../modules/settings/settings_view.dart';
+import '../modules/certification/certification_binding.dart';
+import '../modules/certification/certification_view.dart';
 
 part 'app_routes.dart';
 
@@ -22,6 +29,7 @@ class AppPages {
 
   static final routes = [
     GetPage(name: Routes.home, page: HomeView.new),
+    GetPage(name: Routes.review, page: ReviewView.new),
     GetPage(
       name: Routes.profile,
       page: ProfileView.new,
@@ -36,6 +44,21 @@ class AppPages {
       name: Routes.education,
       page: EducationView.new,
       binding: EducationBinding(),
+    ),
+    GetPage(
+      name: Routes.certifications,
+      page: CertificationView.new,
+      binding: CertificationBinding(),
+    ),
+    GetPage(
+      name: Routes.languages,
+      page: LanguageView.new,
+      binding: LanguageBinding(),
+    ),
+    GetPage(
+      name: Routes.interests,
+      page: InterestView.new,
+      binding: InterestBinding(),
     ),
     GetPage(
       name: Routes.skills,

@@ -3,13 +3,19 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
 
 import '../../data/repositories/education_repository.dart';
+import '../../data/repositories/interest_repository.dart';
+import '../../data/repositories/language_repository.dart';
 import '../../data/repositories/project_repository.dart';
 import '../../data/repositories/resume_profile_repository.dart';
+import '../../data/repositories/certification_repository.dart';
 import '../../data/repositories/skill_repository.dart';
 import '../../data/repositories/work_experience_repository.dart';
 import '../../services/backup_service.dart';
+import '../../services/billing_service.dart';
 import '../../services/premium_service.dart';
 import '../../services/settings_service.dart';
 import '../../utils/resume_sections.dart';
@@ -21,6 +27,9 @@ class SettingsView extends StatefulWidget {
     resumeProfileRepository: ResumeProfileRepository(),
     workExperienceRepository: WorkExperienceRepository(),
     educationRepository: EducationRepository(),
+    certificationRepository: CertificationRepository(),
+    languageRepository: LanguageRepository(),
+    interestRepository: InterestRepository(),
     skillRepository: SkillRepository(),
     projectRepository: ProjectRepository(),
   );
@@ -34,7 +43,17 @@ class _SettingsViewState extends State<SettingsView> {
   final PremiumService _premiumService = Get.find<PremiumService>();
 
   List<ResumeSection> _sectionOrder = ResumeSection.values.toList();
+  Set<ResumeSection> _hiddenSections = <ResumeSection>{};
+  bool _showGpa = true;
+  PdfPageSize _pageSize = PdfPageSize.a4;
+  PdfThemeMode _pdfTheme = PdfThemeMode.light;
   bool _isLoading = true;
+  bool _isBackingUp = false;
+  bool _isRestoring = false;
+  String? _backupError;
+  String? _lastBackupLocation;
+  DateTime? _lastBackupTime;
+  BackupDestination _backupDestination = BackupDestination.local;
 
   bool get _isPremium => _premiumService.isPremium.value;
 
@@ -68,6 +87,21 @@ class _SettingsViewState extends State<SettingsView> {
 
   Future<void> _saveBackup() async {
     if (!await _requirePremium()) return;
+    final confirmed = await _confirmAction(
+      title: 'confirm_backup'.tr,
+      message: 'confirm_backup_message'.tr,
+    );
+    if (!confirmed) return;
+
+    if (_backupDestination == BackupDestination.cloud) {
+      Get.snackbar('info'.tr, 'cloud_backup_not_available'.tr);
+      return;
+    }
+
+    setState(() {
+      _isBackingUp = true;
+      _backupError = null;
+    });
     try {
       final backupPath = await FilePicker.platform.saveFile(
         dialogTitle: 'select_backup_path'.tr,
@@ -84,14 +118,43 @@ class _SettingsViewState extends State<SettingsView> {
       final file = File(backupPath);
       await file.writeAsString(backupContent);
 
+      await _settingsService.saveLastBackup(
+        path: backupPath,
+        destination: _backupDestination,
+      );
+      setState(() {
+        _lastBackupLocation = backupPath;
+        _lastBackupTime = DateTime.now();
+      });
+
       Get.snackbar('success'.tr, 'backup_saved'.trParams({'path': backupPath}));
     } catch (e) {
+      setState(() => _backupError = '$e');
       Get.snackbar('error'.tr, 'backup_failed'.trParams({'error': '$e'}));
+    } finally {
+      if (mounted) {
+        setState(() => _isBackingUp = false);
+      }
     }
   }
 
   Future<void> _restoreBackup() async {
     if (!await _requirePremium()) return;
+    final confirmed = await _confirmAction(
+      title: 'confirm_restore'.tr,
+      message: 'confirm_restore_message'.tr,
+    );
+    if (!confirmed) return;
+
+    if (_backupDestination == BackupDestination.cloud) {
+      Get.snackbar('info'.tr, 'cloud_restore_not_available'.tr);
+      return;
+    }
+
+    setState(() {
+      _isRestoring = true;
+      _backupError = null;
+    });
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -111,8 +174,34 @@ class _SettingsViewState extends State<SettingsView> {
     } on FormatException catch (e) {
       Get.snackbar('error'.tr, 'invalid_backup_format'.trParams({'error': '$e'}));
     } catch (e) {
+      setState(() => _backupError = '$e');
       Get.snackbar('error'.tr, 'backup_restore_failed'.trParams({'error': '$e'}));
+    } finally {
+      if (mounted) {
+        setState(() => _isRestoring = false);
+      }
     }
+  }
+
+  Future<bool> _confirmAction({required String title, required String message}) {
+    return showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('cancel'.tr),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('confirm'.tr),
+              ),
+            ],
+          ),
+        )
+            .then((value) => value ?? false);
   }
 
   @override
@@ -123,11 +212,41 @@ class _SettingsViewState extends State<SettingsView> {
 
   Future<void> _loadSectionOrder() async {
     final order = await _settingsService.loadResumeSectionOrder();
+    final hidden = await _settingsService.loadHiddenSections();
+    final showGpa = await _settingsService.loadGpaVisibility();
+    final pageFormat = await _settingsService.loadPageFormat();
+    final pdfTheme = await _settingsService.loadPdfTheme();
+    final lastBackup = await _settingsService.loadLastBackup();
     if (!mounted) return;
     setState(() {
       _sectionOrder = order;
+      _hiddenSections = hidden;
+      _showGpa = showGpa;
+      _pdfTheme = pdfTheme;
+      _pageSize = pageFormat == PdfPageFormat.letter
+          ? PdfPageSize.letter
+          : PdfPageSize.a4;
+      _backupDestination = lastBackup.destination;
+      _lastBackupLocation = lastBackup.path;
+      _lastBackupTime = lastBackup.time;
       _isLoading = false;
     });
+  }
+
+  String _buildLastBackupLabel(BuildContext context) {
+    if (_lastBackupTime == null || _lastBackupLocation == null) {
+      return 'no_backup_yet'.tr;
+    }
+
+    final dateFormat = DateFormat.yMMMd(Localizations.localeOf(context).languageCode);
+    final timeFormat = DateFormat.Hm(Localizations.localeOf(context).languageCode);
+    final formattedTime =
+        '${dateFormat.format(_lastBackupTime!)} • ${timeFormat.format(_lastBackupTime!)}';
+    final locationLabel = _backupDestination == BackupDestination.cloud
+        ? 'cloud_storage'.tr
+        : _lastBackupLocation!;
+
+    return '${'last_backup'.tr}: $formattedTime (${locationLabel})';
   }
 
   Future<void> _onReorder(int oldIndex, int newIndex) async {
@@ -142,6 +261,36 @@ class _SettingsViewState extends State<SettingsView> {
 
     await _settingsService.saveResumeSectionOrder(_sectionOrder);
     Get.snackbar('success'.tr, 'sections_order_saved'.tr);
+  }
+
+  Future<void> _toggleSectionVisibility(
+    ResumeSection section,
+    bool enabled,
+  ) async {
+    setState(() {
+      if (enabled) {
+        _hiddenSections.remove(section);
+      } else {
+        _hiddenSections.add(section);
+      }
+    });
+
+    await _settingsService.saveHiddenSections(_hiddenSections);
+  }
+
+  Future<void> _updateGpaVisibility(bool value) async {
+    setState(() => _showGpa = value);
+    await _settingsService.saveGpaVisibility(value);
+  }
+
+  Future<void> _updatePageSize(PdfPageSize size) async {
+    setState(() => _pageSize = size);
+    await _settingsService.savePageFormat(size);
+  }
+
+  Future<void> _updatePdfTheme(PdfThemeMode mode) async {
+    setState(() => _pdfTheme = mode);
+    await _settingsService.savePdfTheme(mode);
   }
 
   @override
