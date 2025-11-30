@@ -81,6 +81,7 @@ const Map<String, String> faIR = {
   'no_education_history': 'سابقه تحصیلی یافت نشد.',
   'skill_name_label': 'نام مهارت',
   'level_label': 'سطح',
+  'category': 'دسته‌بندی',
   'no_skills': 'مهارتی یافت نشد.',
   'title_label': 'عنوان',
   'link_label': 'لینک',

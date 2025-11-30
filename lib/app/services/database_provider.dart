@@ -23,7 +23,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -73,6 +73,7 @@ class DatabaseProvider {
             profileId INTEGER NOT NULL,
             name TEXT NOT NULL,
             level TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'General',
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -92,6 +93,12 @@ class DatabaseProvider {
         if (oldVersion < 2) {
           await db.execute('ALTER TABLE resume_profiles ADD COLUMN imagePath TEXT');
           await db.execute('ALTER TABLE resume_profiles ADD COLUMN signaturePath TEXT');
+        }
+
+        if (oldVersion < 3) {
+          await db.execute(
+            "ALTER TABLE skills ADD COLUMN category TEXT NOT NULL DEFAULT 'General'",
+          );
         }
       },
     );
