@@ -80,7 +80,7 @@ class BackupService {
       'description',
     ]);
     final skillMaps =
-        _validateMapList(data['skills'], const ['profileId', 'name', 'level']);
+        _validateMapList(data['skills'], const ['profileId', 'name']);
     final projectMaps = _validateMapList(data['projects'], const [
       'profileId',
       'title',
@@ -168,7 +168,12 @@ class BackupService {
         final skill = Skill(
           profileId: profileId,
           name: _requireString(map, 'name'),
-          level: _requireString(map, 'level'),
+          category: skillCategoryFromString(
+              _optionalString(map, 'category') ?? SkillCategory.language.name),
+          levelValue: _optionalInt(map, 'levelValue') ?? int.tryParse(_optionalString(map, 'level') ?? ''),
+          proficiency:
+              skillProficiencyFromString(_optionalString(map, 'proficiency')),
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
         );
 
         await txn.insert(
@@ -230,6 +235,20 @@ class BackupService {
     final value = map[key];
     if (value is String && value.isNotEmpty) {
       return value;
+    }
+    return null;
+  }
+
+  int? _optionalInt(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String && value.isNotEmpty) {
+      return int.tryParse(value);
     }
     return null;
   }
