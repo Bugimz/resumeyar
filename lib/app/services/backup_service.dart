@@ -67,6 +67,8 @@ class BackupService {
       'startDate',
       'endDate',
       'description',
+      'achievements',
+      'techTags',
     ]);
     final educationMaps = _validateMapList(data['educations'], const [
       'profileId',
@@ -132,11 +134,14 @@ class BackupService {
           startDate: _requireString(map, 'startDate'),
           endDate: _requireString(map, 'endDate'),
           description: _requireString(map, 'description'),
+          achievements: _stringList(map, 'achievements'),
+          techTags: _stringList(map, 'techTags'),
+          metric: _optionalString(map, 'metric'),
         );
 
         await txn.insert(
           WorkExperienceRepository.tableName,
-          experience.toMap()..remove('id'),
+          experience.toDbMap()..remove('id'),
         );
       }
 
@@ -227,6 +232,22 @@ class BackupService {
       return value;
     }
     return null;
+  }
+
+  List<String> _stringList(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is List) {
+      return value.whereType<String>().toList();
+    }
+
+    if (value is String && value.isNotEmpty) {
+      final decoded = jsonDecode(value);
+      if (decoded is List) {
+        return decoded.whereType<String>().toList();
+      }
+    }
+
+    return const [];
   }
 
   int _resolveProfileId(Map<String, dynamic> map, Map<int, int> profileIdMap) {

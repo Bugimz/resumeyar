@@ -15,6 +15,9 @@ class WorkView extends GetView<WorkController> {
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController achievementsController = TextEditingController();
+  final TextEditingController techTagsController = TextEditingController();
+  final TextEditingController metricController = TextEditingController();
   final Rxn<WorkExperience> editingExperience = Rxn<WorkExperience>();
   final RxBool isFormValid = false.obs;
 
@@ -25,6 +28,9 @@ class WorkView extends GetView<WorkController> {
     startDateController.clear();
     endDateController.clear();
     descriptionController.clear();
+    achievementsController.clear();
+    techTagsController.clear();
+    metricController.clear();
     isFormValid.value = false;
   }
 
@@ -44,6 +50,22 @@ class WorkView extends GetView<WorkController> {
       Get.snackbar('error'.tr, 'invalid_number'.tr);
     }
     return profileId;
+  }
+
+  List<String> _parseAchievements() {
+    return achievementsController.text
+        .split('\n')
+        .map((e) => e.trim())
+        .where((element) => element.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _parseTags() {
+    return techTagsController.text
+        .split(',')
+        .map((e) => e.trim())
+        .where((element) => element.isNotEmpty)
+        .toList();
   }
 
   Future<void> _loadList() async {
@@ -71,6 +93,11 @@ class WorkView extends GetView<WorkController> {
       startDate: startDateController.text,
       endDate: endDateController.text,
       description: descriptionController.text,
+      achievements: _parseAchievements(),
+      techTags: _parseTags(),
+      metric: metricController.text.trim().isEmpty
+          ? null
+          : metricController.text.trim(),
     );
 
     if (editingExperience.value == null) {
@@ -176,6 +203,43 @@ class WorkView extends GetView<WorkController> {
                           ),
                           SizedBox(
                             width: fieldWidth,
+                            child: TextFormField(
+                              controller: achievementsController,
+                              decoration: const InputDecoration(
+                                labelText: 'Achievements (3-5 bullet points)',
+                                hintText:
+                                    'E.g., Increased uptime by 20% through...\nReduced costs by 15% by...',
+                              ),
+                              validator: FormValidators.achievementBullets,
+                              maxLines: 5,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
+                              controller: techTagsController,
+                              decoration: const InputDecoration(
+                                labelText: 'Tech tags (comma separated)',
+                                hintText: 'e.g., Flutter, GetX, Firebase',
+                              ),
+                              validator: FormValidators.tagList,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
+                              controller: metricController,
+                              decoration: const InputDecoration(
+                                labelText: 'Key metric (optional)',
+                                hintText: 'e.g., 250K monthly users',
+                              ),
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
                             child: Wrap(
                               spacing: 12,
                               runSpacing: 8,
@@ -227,9 +291,40 @@ class WorkView extends GetView<WorkController> {
                             child: ListTile(
                               title: Text(
                                   '${experience.company} • ${experience.position}'),
-                              subtitle: Text(
-                                  '${experience.startDate} - ${experience.endDate}\n${experience.description}'),
-                              isThreeLine: true,
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                      '${experience.startDate} - ${experience.endDate}'),
+                                  const SizedBox(height: 6),
+                                  Text(experience.description),
+                                  if (experience.metric != null &&
+                                      experience.metric!.isNotEmpty)
+                                    Padding(
+                                      padding:
+                                          const EdgeInsets.only(top: 6, bottom: 2),
+                                      child: Text('Metric: ${experience.metric}'),
+                                    ),
+                                  const SizedBox(height: 8),
+                                  Text('Achievements',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge),
+                                  const SizedBox(height: 6),
+                                  _buildAchievementsSection(
+                                    experience.achievements,
+                                    isWide,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text('Tech tags',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge),
+                                  const SizedBox(height: 6),
+                                  _buildTechTags(experience.techTags),
+                                ],
+                              ),
+                              isThreeLine: false,
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -249,6 +344,12 @@ class WorkView extends GetView<WorkController> {
                                           experience.endDate;
                                       descriptionController.text =
                                           experience.description;
+                                      achievementsController.text =
+                                          experience.achievements.join('\n');
+                                      techTagsController.text =
+                                          experience.techTags.join(', ');
+                                      metricController.text =
+                                          experience.metric ?? '';
                                       _updateFormValidity();
                                     },
                                   ),
@@ -274,6 +375,50 @@ class WorkView extends GetView<WorkController> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildAchievementsSection(List<String> achievements, bool isWide) {
+    final chips = achievements
+        .map((achievement) => Chip(label: Text(achievement)))
+        .toList();
+
+    if (isWide) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: achievements
+          .map(
+            (achievement) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('• '),
+                  Expanded(child: Text(achievement)),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildTechTags(List<String> tags) {
+    if (tags.isEmpty) {
+      return const Text('No tech tags added');
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: tags.map((tag) => Chip(label: Text(tag))).toList(),
     );
   }
 }

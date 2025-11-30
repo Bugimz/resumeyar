@@ -69,4 +69,48 @@ class FormValidators {
     }
     return null;
   }
+
+  static String? achievementBullets(String? value) {
+    final required = requiredField(value);
+    if (required != null) {
+      return required;
+    }
+
+    final bullets =
+        value!.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    if (bullets.length < 3 || bullets.length > 5) {
+      return 'Enter 3 to 5 concise achievements.';
+    }
+
+    final invalidEntries = bullets.where((entry) {
+      final hasMetric = RegExp(r'\d').hasMatch(entry);
+      final startsWithVerb = RegExp(r'^[A-Za-zآ-ی]+').hasMatch(entry);
+      return !hasMetric || !startsWithVerb;
+    }).toList();
+
+    if (invalidEntries.isNotEmpty) {
+      return 'Use action verbs with metrics (e.g., "Increased throughput by 20%" ).';
+    }
+
+    return null;
+  }
+
+  static String? tagList(String? value) {
+    final required = requiredField(value);
+    if (required != null) {
+      return required;
+    }
+
+    final tags = value!
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    if (tags.isEmpty) {
+      return 'Enter at least one technology tag.';
+    }
+
+    return null;
+  }
 }
