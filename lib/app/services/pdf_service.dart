@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf_google_fonts/pdf_google_fonts.dart';
 import 'package:printing/printing.dart';
 
 import '../data/models/education.dart';
@@ -132,26 +133,47 @@ class PdfService {
       fontSize: 11.5,
     );
 
-    // ۴) ساخت صفحه
     pdf.addPage(
       pw.MultiPage(
         pageTheme: pageTheme,
         build: (context) {
-          final children = _buildSectionsByOrder(
-            filteredSectionOrder,
-            template,
-            profile,
-            workExperiences,
-            educations,
-            certifications,
-            languages,
-            interests,
-            skills,
-            projects,
-            isRtl,
-            showGpa,
-            projectImages,
-          );
+          List<pw.Widget> children;
+
+          switch (template) {
+            case ResumeTemplate.minimal:
+              children = _buildMinimalTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              );
+              break;
+            case ResumeTemplate.modern:
+              children = _buildModernTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              );
+              break;
+            case ResumeTemplate.elegant:
+              children = _buildElegantTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              );
+              break;
+          }
 
           return [
             pw.DefaultTextStyle.merge(

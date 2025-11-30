@@ -18,6 +18,14 @@ class SkillView extends GetView<SkillController> {
   final Rxn<SkillProficiency> selectedProficiency = Rxn<SkillProficiency>();
   final RxBool isFormValid = false.obs;
 
+  @override
+  void dispose() {
+    profileIdController.dispose();
+    nameController.dispose();
+    levelController.dispose();
+    super.dispose();
+  }
+
   void _resetForm() {
     editingSkill.value = null;
     nameController.clear();

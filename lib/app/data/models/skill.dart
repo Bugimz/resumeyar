@@ -53,53 +53,14 @@ class Skill {
     int? id,
     int? profileId,
     String? name,
-    SkillCategory? category,
-    int? levelValue,
-    SkillProficiency? proficiency,
-    int? sortOrder,
+    String? level,
   }) {
     return Skill(
       id: id ?? this.id,
       profileId: profileId ?? this.profileId,
       name: name ?? this.name,
-      category: category ?? this.category,
-      levelValue: levelValue ?? this.levelValue,
-      proficiency: proficiency ?? this.proficiency,
-      sortOrder: sortOrder ?? this.sortOrder,
+      level: level ?? this.level,
     );
-  }
-
-  String get displayLevel {
-    if (levelValue != null) {
-      return levelValue!.clamp(1, 5).toString();
-    }
-    if (proficiency != null) {
-      switch (proficiency!) {
-        case SkillProficiency.beginner:
-          return 'Beginner';
-        case SkillProficiency.intermediate:
-          return 'Intermediate';
-        case SkillProficiency.expert:
-          return 'Expert';
-      }
-    }
-    return '';
-  }
-
-  double? get levelProgress {
-    if (levelValue != null) {
-      return levelValue!.clamp(1, 5) / 5.0;
-    }
-    switch (proficiency) {
-      case SkillProficiency.beginner:
-        return 0.33;
-      case SkillProficiency.intermediate:
-        return 0.66;
-      case SkillProficiency.expert:
-        return 1.0;
-      case null:
-        return null;
-    }
   }
 
   Map<String, dynamic> toMap() {
@@ -139,4 +100,8 @@ class Skill {
       sortOrder: map['sortOrder'] as int? ?? 0,
     );
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory Skill.fromJson(Map<String, dynamic> json) => Skill.fromMap(json);
 }

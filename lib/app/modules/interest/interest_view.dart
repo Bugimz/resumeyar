@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/interest.dart';
-import '../../theme/app_colors.dart';
 import '../../utils/validators.dart';
 import 'interest_controller.dart';
 
@@ -10,16 +9,15 @@ class InterestView extends GetView<InterestController> {
   InterestView({super.key});
 
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController profileIdController = TextEditingController(text: '1');
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController detailsController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
   final Rxn<Interest> editingInterest = Rxn<Interest>();
   final RxBool isFormValid = false.obs;
 
   void _resetForm() {
     editingInterest.value = null;
-    titleController.clear();
-    detailsController.clear();
+    nameController.clear();
+    descriptionController.clear();
     isFormValid.value = false;
   }
 
@@ -29,23 +27,7 @@ class InterestView extends GetView<InterestController> {
       isFormValid.value = false;
       return;
     }
-
     isFormValid.value = currentState.validate();
-  }
-
-  int? _parseProfileId() {
-    final profileId = int.tryParse(profileIdController.text);
-    if (profileId == null) {
-      Get.snackbar('error'.tr, 'invalid_number'.tr);
-    }
-    return profileId;
-  }
-
-  Future<void> _loadList() async {
-    final profileId = _parseProfileId();
-    if (profileId != null) {
-      await controller.load(profileId);
-    }
   }
 
   Future<void> _submit() async {
@@ -53,17 +35,10 @@ class InterestView extends GetView<InterestController> {
       return;
     }
 
-    final profileId = _parseProfileId();
-    if (profileId == null) {
-      return;
-    }
-
     final interest = Interest(
       id: editingInterest.value?.id,
-      profileId: profileId,
-      title: titleController.text,
-      details: detailsController.text,
-      sortOrder: editingInterest.value?.sortOrder ?? -1,
+      name: nameController.text,
+      description: descriptionController.text,
     );
 
     if (editingInterest.value == null) {
@@ -75,24 +50,16 @@ class InterestView extends GetView<InterestController> {
     _resetForm();
   }
 
-  void _editInterest(Interest interest) {
-    editingInterest.value = interest;
-    profileIdController.text = interest.profileId.toString();
-    titleController.text = interest.title;
-    detailsController.text = interest.details;
-    _updateFormValidity();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('interests'.tr),
-      ),
+      appBar: AppBar(title: const Text('Interests')),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 720;
-          final double fieldWidth = isWide ? (constraints.maxWidth / 2) - 28 : constraints.maxWidth;
+          final double fieldWidth = isWide
+              ? (constraints.maxWidth / 2) - 28
+              : constraints.maxWidth;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -112,18 +79,10 @@ class InterestView extends GetView<InterestController> {
                           SizedBox(
                             width: fieldWidth,
                             child: TextFormField(
-                              controller: profileIdController,
-                              decoration: InputDecoration(labelText: 'profile_id'.tr),
-                              keyboardType: TextInputType.number,
-                              validator: FormValidators.numeric,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: titleController,
-                              decoration: InputDecoration(labelText: 'interest_title_label'.tr),
+                              controller: nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'Interest',
+                              ),
                               validator: FormValidators.requiredField,
                               onChanged: (_) => _updateFormValidity(),
                             ),
@@ -131,36 +90,34 @@ class InterestView extends GetView<InterestController> {
                           SizedBox(
                             width: fieldWidth,
                             child: TextFormField(
-                              controller: detailsController,
-                              decoration: InputDecoration(
-                                labelText: 'interest_details_label'.tr,
-                                hintText: 'interest_details_hint'.tr,
+                              controller: descriptionController,
+                              decoration: const InputDecoration(
+                                labelText: 'Description',
                               ),
-                              maxLines: 3,
+                              validator: FormValidators.requiredField,
                               onChanged: (_) => _updateFormValidity(),
+                              maxLines: 3,
                             ),
                           ),
                           SizedBox(
                             width: fieldWidth,
-                            child: Row(
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
                               children: [
-                                Expanded(
-                                  child: Obx(
-                                    () => FilledButton(
-                                      onPressed: isFormValid.value ? _submit : null,
-                                      child: Text(editingInterest.value == null ? 'save'.tr : 'update'.tr),
+                                Obx(
+                                  () => ElevatedButton(
+                                    onPressed: isFormValid.value ? _submit : null,
+                                    child: Text(
+                                      editingInterest.value == null
+                                          ? 'Save'
+                                          : 'Update',
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                OutlinedButton(
-                                  onPressed: _resetForm,
-                                  child: Text('clear'.tr),
-                                ),
-                                const SizedBox(width: 8),
                                 TextButton(
-                                  onPressed: _loadList,
-                                  child: Text('load_list'.tr),
+                                  onPressed: _resetForm,
+                                  child: const Text('Clear'),
                                 ),
                               ],
                             ),
@@ -169,31 +126,36 @@ class InterestView extends GetView<InterestController> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Obx(
-                      () => controller.interests.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 20),
-                                child: Text('no_interests'.tr),
+                    const Text(
+                      'Interests',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Obx(() {
+                      final interests = controller.interests;
+                      if (interests.isEmpty) {
+                        return const Text('No interests added yet');
+                      }
+
+                      return Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: interests
+                            .map(
+                              (interest) => SizedBox(
+                                width: isWide
+                                    ? (constraints.maxWidth / 2) - 28
+                                    : constraints.maxWidth,
+                                child: _InterestCard(
+                                  interest: interest,
+                                  onEdit: _editInterest,
+                                  onDelete: () => controller.delete(interest.id!),
+                                ),
                               ),
                             )
-                          : Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: controller.interests
-                                  .map(
-                                    (interest) => SizedBox(
-                                      width: isWide ? (constraints.maxWidth / 2) - 28 : constraints.maxWidth,
-                                      child: _InterestCard(
-                                        interest: interest,
-                                        onEdit: _editInterest,
-                                        onDelete: () => controller.delete(interest.id!),
-                                      ),
-                                    ),
-                                  )
-                                  .toList(),
-                            ),
-                    ),
+                            .toList(),
+                      );
+                    }),
                   ],
                 ),
               ),
@@ -203,52 +165,43 @@ class InterestView extends GetView<InterestController> {
       ),
     );
   }
+
+  void _editInterest(Interest interest) {
+    editingInterest.value = interest;
+    nameController.text = interest.name;
+    descriptionController.text = interest.description;
+    _updateFormValidity();
+  }
 }
 
 class _InterestCard extends StatelessWidget {
-  const _InterestCard({required this.interest, required this.onEdit, required this.onDelete});
+  const _InterestCard({
+    required this.interest,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final Interest interest;
-  final VoidCallback onEdit;
+  final ValueChanged<Interest> onEdit;
   final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: const BorderSide(color: AppColors.cardStroke),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ListTile(
+        title: Text(interest.name),
+        subtitle: Text(interest.description),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    interest.title,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                ),
-                IconButton(
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'update'.tr,
-                ),
-                IconButton(
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline),
-                  tooltip: 'delete'.tr,
-                ),
-              ],
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () => onEdit(interest),
             ),
-            if (interest.details.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(interest.details),
-            ],
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: onDelete,
+            ),
           ],
         ),
       ),
