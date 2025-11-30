@@ -25,7 +25,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 5,
+      version: 6,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -73,6 +73,11 @@ class DatabaseProvider {
             startDate TEXT NOT NULL,
             endDate TEXT NOT NULL,
             description TEXT NOT NULL,
+            gpa REAL,
+            showGpa INTEGER NOT NULL DEFAULT 0,
+            honors TEXT NOT NULL DEFAULT '[]',
+            courses TEXT NOT NULL DEFAULT '[]',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -169,6 +174,18 @@ class DatabaseProvider {
               whereArgs: [skillRow['id']],
             );
           }
+        }
+
+        if (oldVersion < 6) {
+          await db.execute('ALTER TABLE educations ADD COLUMN gpa REAL');
+          await db
+              .execute('ALTER TABLE educations ADD COLUMN showGpa INTEGER NOT NULL DEFAULT 0');
+          await db.execute(
+              "ALTER TABLE educations ADD COLUMN honors TEXT NOT NULL DEFAULT '[]'");
+          await db.execute(
+              "ALTER TABLE educations ADD COLUMN courses TEXT NOT NULL DEFAULT '[]'");
+          await db.execute(
+              'ALTER TABLE educations ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0');
         }
       },
     );
