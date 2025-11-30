@@ -8,7 +8,7 @@ class WorkExperienceRepository {
 
   Future<int> create(WorkExperience experience) async {
     final db = await DatabaseProvider.instance.database;
-    return db.insert(tableName, experience.toMap());
+    return db.insert(tableName, experience.toDbMap());
   }
 
   Future<WorkExperience?> getById(int id) async {
@@ -36,7 +36,7 @@ class WorkExperienceRepository {
     final db = await DatabaseProvider.instance.database;
     return db.update(
       tableName,
-      experience.toMap(),
+      experience.toDbMap(),
       where: 'id = ?',
       whereArgs: [experience.id],
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/models/project.dart';
 import '../../utils/validators.dart';
@@ -13,14 +14,30 @@ class ProjectView extends GetView<ProjectController> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
   final TextEditingController linkController = TextEditingController();
+  final TextEditingController roleController = TextEditingController();
+  final TextEditingController responsibilitiesController = TextEditingController();
+  final TextEditingController techTagsController = TextEditingController();
+  final TextEditingController demoLinkController = TextEditingController();
+  final TextEditingController githubLinkController = TextEditingController();
+  final TextEditingController liveLinkController = TextEditingController();
+  final TextEditingController thumbnailController = TextEditingController();
   final Rxn<Project> editingProject = Rxn<Project>();
   final RxBool isFormValid = false.obs;
+  final RxBool isFeatured = false.obs;
 
   void _resetForm() {
     editingProject.value = null;
     titleController.clear();
     descriptionController.clear();
     linkController.clear();
+    roleController.clear();
+    responsibilitiesController.clear();
+    techTagsController.clear();
+    demoLinkController.clear();
+    githubLinkController.clear();
+    liveLinkController.clear();
+    thumbnailController.clear();
+    isFeatured.value = false;
     isFormValid.value = false;
   }
 
@@ -65,6 +82,14 @@ class ProjectView extends GetView<ProjectController> {
       title: titleController.text,
       description: descriptionController.text,
       link: linkController.text,
+      role: roleController.text,
+      responsibilities: _splitLines(responsibilitiesController.text),
+      techTags: _splitTags(techTagsController.text),
+      demoLink: demoLinkController.text,
+      githubLink: githubLinkController.text,
+      liveLink: liveLinkController.text,
+      thumbnailUrl: thumbnailController.text,
+      isFeatured: isFeatured.value,
     );
 
     if (editingProject.value == null) {
@@ -74,6 +99,32 @@ class ProjectView extends GetView<ProjectController> {
     }
 
     _resetForm();
+  }
+
+  List<String> _splitLines(String value) {
+    return value
+        .split(RegExp(r'\r?\n'))
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _splitTags(String value) {
+    return value
+        .split(RegExp(r'[\n,]'))
+        .map((tag) => tag.trim())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+  }
+
+  Future<void> _launchLink(String url) async {
+    if (url.isEmpty) return;
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      Get.snackbar('error'.tr, 'invalid_link'.tr);
+    }
   }
 
   @override
@@ -238,6 +289,27 @@ class ProjectView extends GetView<ProjectController> {
           );
         },
       ),
+    );
+  }
+}
+
+class _LinkChip extends StatelessWidget {
+  const _LinkChip({
+    required this.label,
+    required this.url,
+    required this.onTap,
+  });
+
+  final String label;
+  final String url;
+  final Future<void> Function(String url) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      label: Text(label),
+      avatar: const Icon(Icons.link, size: 18),
+      onPressed: () => onTap(url),
     );
   }
 }
