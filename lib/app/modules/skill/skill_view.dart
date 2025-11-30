@@ -21,6 +21,10 @@ class _SkillViewState extends State<SkillView> {
   final TextEditingController levelController = TextEditingController();
   final TextEditingController categoryController = TextEditingController(text: 'General');
   final Rxn<Skill> editingSkill = Rxn<Skill>();
+  final Rx<SkillCategory> selectedCategory = SkillCategory.language.obs;
+  final RxString levelMode = 'numeric'.obs;
+  final RxInt numericLevel = 3.obs;
+  final Rxn<SkillProficiency> selectedProficiency = Rxn<SkillProficiency>();
   final RxBool isFormValid = false.obs;
 
   @override
@@ -94,6 +98,7 @@ class _SkillViewState extends State<SkillView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('skills'.tr),
