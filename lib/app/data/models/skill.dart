@@ -3,20 +3,32 @@ class Skill {
   final int profileId;
   final String name;
   final String level;
+  final String category;
 
   const Skill({
     this.id,
     required this.profileId,
     required this.name,
     required this.level,
+    required this.category,
   });
 
-  Map<String, dynamic> toMap() {
+  /// ایجاد نمونه جدید با شناسه پایگاه‌داده بدون اتکا به copyWith
+  Skill withDatabaseId(int newId) => Skill(
+        id: newId,
+        profileId: profileId,
+        name: name,
+        level: level,
+        category: category,
+      );
+
+  Map<String, dynamic> toMap({bool includeId = true}) {
     return {
-      'id': id,
+      if (includeId) 'id': id,
       'profileId': profileId,
       'name': name,
       'level': level,
+      'category': category,
     };
   }
 
@@ -26,6 +38,11 @@ class Skill {
       profileId: map['profileId'] as int,
       name: map['name'] as String,
       level: map['level'] as String,
+      category: (map['category'] as String?) ?? 'General',
     );
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory Skill.fromJson(Map<String, dynamic> json) => Skill.fromMap(json);
 }

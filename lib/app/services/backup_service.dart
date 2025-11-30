@@ -77,8 +77,10 @@ class BackupService {
       'endDate',
       'description',
     ]);
-    final skillMaps =
-        _validateMapList(data['skills'], const ['profileId', 'name', 'level']);
+    final skillMaps = _validateMapList(
+      data['skills'],
+      const ['profileId', 'name', 'level', 'category'],
+    );
     final projectMaps = _validateMapList(data['projects'], const [
       'profileId',
       'title',
@@ -159,6 +161,7 @@ class BackupService {
           profileId: profileId,
           name: _requireString(map, 'name'),
           level: _requireString(map, 'level'),
+          category: _requireString(map, 'category'),
         );
 
         await txn.insert(
