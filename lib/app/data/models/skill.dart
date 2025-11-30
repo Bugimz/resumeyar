@@ -49,23 +49,17 @@ class Skill {
     this.sortOrder = 0,
   });
 
-  Skill copyWith({
-    int? id,
-    int? profileId,
-    String? name,
-    String? level,
-  }) {
-    return Skill(
-      id: id ?? this.id,
-      profileId: profileId ?? this.profileId,
-      name: name ?? this.name,
-      level: level ?? this.level,
-    );
-  }
+  /// ایجاد نمونه جدید با شناسه پایگاه‌داده بدون اتکا به copyWith
+  Skill withDatabaseId(int newId) => Skill(
+        id: newId,
+        profileId: profileId,
+        name: name,
+        level: level,
+      );
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toMap({bool includeId = true}) {
     return {
-      'id': id,
+      if (includeId) 'id': id,
       'profileId': profileId,
       'name': name,
       'category': category.name,
