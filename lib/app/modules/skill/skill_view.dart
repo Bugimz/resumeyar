@@ -18,8 +18,11 @@ class _SkillViewState extends State<SkillView> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController profileIdController = TextEditingController(text: '1');
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController levelController = TextEditingController();
   final Rxn<Skill> editingSkill = Rxn<Skill>();
+  final Rx<SkillCategory> selectedCategory = SkillCategory.language.obs;
+  final RxString levelMode = 'numeric'.obs;
+  final RxInt numericLevel = 3.obs;
+  final Rxn<SkillProficiency> selectedProficiency = Rxn<SkillProficiency>();
   final RxBool isFormValid = false.obs;
 
   @override
@@ -33,7 +36,10 @@ class _SkillViewState extends State<SkillView> {
   void _resetForm() {
     editingSkill.value = null;
     nameController.clear();
-    levelController.clear();
+    selectedCategory.value = SkillCategory.language;
+    levelMode.value = 'numeric';
+    numericLevel.value = 3;
+    selectedProficiency.value = null;
     isFormValid.value = false;
   }
 
@@ -76,7 +82,10 @@ class _SkillViewState extends State<SkillView> {
       id: editingSkill.value?.id,
       profileId: profileId,
       name: nameController.text,
-      level: levelController.text,
+      category: selectedCategory.value,
+      levelValue: levelMode.value == 'numeric' ? numericLevel.value : null,
+      proficiency: levelMode.value == 'proficiency' ? selectedProficiency.value : null,
+      sortOrder: editingSkill.value?.sortOrder ?? -1,
     );
 
     if (editingSkill.value == null) {
@@ -90,6 +99,7 @@ class _SkillViewState extends State<SkillView> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('skills'.tr),
