@@ -23,7 +23,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -54,6 +54,9 @@ class DatabaseProvider {
             startDate TEXT NOT NULL,
             endDate TEXT NOT NULL,
             description TEXT NOT NULL,
+            achievements TEXT NOT NULL DEFAULT '[]',
+            techTags TEXT NOT NULL DEFAULT '[]',
+            metric TEXT,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -110,6 +113,15 @@ class DatabaseProvider {
               "ALTER TABLE resume_profiles ADD COLUMN linkedInUrl TEXT NOT NULL DEFAULT ''");
           await db.execute(
               "ALTER TABLE resume_profiles ADD COLUMN githubUrl TEXT NOT NULL DEFAULT ''");
+        }
+
+        if (oldVersion < 4) {
+          await db.execute(
+              "ALTER TABLE work_experiences ADD COLUMN achievements TEXT NOT NULL DEFAULT '[]'");
+          await db.execute(
+              "ALTER TABLE work_experiences ADD COLUMN techTags TEXT NOT NULL DEFAULT '[]'");
+          await db.execute(
+              'ALTER TABLE work_experiences ADD COLUMN metric TEXT');
         }
       },
     );
