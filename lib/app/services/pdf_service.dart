@@ -492,15 +492,64 @@ class PdfService {
                   style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                   textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
                 ),
+                if (project.role.isNotEmpty)
+                  pw.Text(
+                    project.role,
+                    style: pw.TextStyle(fontSize: 10, color: PdfColors.grey700),
+                    textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                  ),
                 pw.Text(
                   project.description,
                   textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
                 ),
-                if (project.link.isNotEmpty)
-                  pw.Text(
-                    project.link,
-                    textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                if (project.responsibilities.isNotEmpty)
+                  pw.Column(
+                    crossAxisAlignment: isRtl
+                        ? pw.CrossAxisAlignment.end
+                        : pw.CrossAxisAlignment.start,
+                    children: project.responsibilities
+                        .map(
+                          (item) => pw.Row(
+                            crossAxisAlignment: pw.CrossAxisAlignment.start,
+                            children: [
+                              pw.Text('• '),
+                              pw.Expanded(child: pw.Text(item)),
+                            ],
+                          ),
+                        )
+                        .toList(),
                   ),
+                if (project.techTags.isNotEmpty)
+                  pw.Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
+                    children: project.techTags
+                        .map((tag) => pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: pw.BoxDecoration(
+                                color: PdfColors.blue50,
+                                borderRadius: pw.BorderRadius.circular(4),
+                              ),
+                              child: pw.Text(tag,
+                                  style: const pw.TextStyle(fontSize: 10)),
+                            ))
+                        .toList(),
+                  ),
+                pw.Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  children: [
+                    if (project.link.isNotEmpty)
+                      _buildProjectLink('Link', project.link, isRtl),
+                    if (project.demoLink.isNotEmpty)
+                      _buildProjectLink('Demo', project.demoLink, isRtl),
+                    if (project.githubLink.isNotEmpty)
+                      _buildProjectLink('GitHub', project.githubLink, isRtl),
+                    if (project.liveLink.isNotEmpty)
+                      _buildProjectLink('Live', project.liveLink, isRtl),
+                  ],
+                ),
               ],
             ),
           ),
@@ -508,6 +557,24 @@ class PdfService {
         if (projects.isEmpty) pw.Text('No projects added yet'),
         pw.SizedBox(height: 16),
       ],
+    );
+  }
+
+  pw.Widget _buildProjectLink(String label, String url, bool isRtl) {
+    return pw.UrlLink(
+      destination: url,
+      child: pw.Container(
+        padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: pw.BoxDecoration(
+          borderRadius: pw.BorderRadius.circular(4),
+          border: pw.Border.all(color: PdfColors.blueGrey300, width: 0.5),
+        ),
+        child: pw.Text(
+          label,
+          textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+          style: const pw.TextStyle(fontSize: 10, color: PdfColors.blue),
+        ),
+      ),
     );
   }
 
