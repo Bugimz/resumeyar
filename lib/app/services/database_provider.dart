@@ -1,6 +1,8 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../data/models/skill.dart';
+
 class DatabaseProvider {
   DatabaseProvider._internal();
 
@@ -23,7 +25,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -80,7 +82,10 @@ class DatabaseProvider {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             profileId INTEGER NOT NULL,
             name TEXT NOT NULL,
-            level TEXT NOT NULL,
+            category TEXT NOT NULL,
+            levelValue INTEGER,
+            proficiency TEXT,
+            sortOrder INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -122,6 +127,48 @@ class DatabaseProvider {
               "ALTER TABLE work_experiences ADD COLUMN techTags TEXT NOT NULL DEFAULT '[]'");
           await db.execute(
               'ALTER TABLE work_experiences ADD COLUMN metric TEXT');
+        }
+
+        if (oldVersion < 5) {
+          await db.execute(
+              "ALTER TABLE skills ADD COLUMN category TEXT NOT NULL DEFAULT 'language'");
+          await db.execute('ALTER TABLE skills ADD COLUMN levelValue INTEGER');
+          await db.execute('ALTER TABLE skills ADD COLUMN proficiency TEXT');
+          await db.execute(
+              'ALTER TABLE skills ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0');
+
+          final legacySkills = await db.query('skills');
+          final Map<String, int> categoryCounts = {
+            for (final category in SkillCategory.values) category.name: 0
+          };
+
+          for (final skillRow in legacySkills) {
+            final legacyLevel = skillRow['level'] as String?;
+            int? parsedLevel;
+            SkillProficiency? parsedProficiency =
+                skillProficiencyFromString(legacyLevel);
+            final numeric = int.tryParse(legacyLevel ?? '');
+            if (numeric != null) {
+              parsedLevel = numeric.clamp(1, 5);
+              parsedProficiency = null;
+            }
+
+            final category = skillCategoryFromString(skillRow['category'] as String?);
+            final sortOrder = categoryCounts[category.name] ?? 0;
+            categoryCounts[category.name] = sortOrder + 1;
+
+            await db.update(
+              'skills',
+              {
+                'levelValue': parsedLevel,
+                'proficiency': parsedProficiency?.name,
+                'category': category.name,
+                'sortOrder': sortOrder,
+              },
+              where: 'id = ?',
+              whereArgs: [skillRow['id']],
+            );
+          }
         }
       },
     );

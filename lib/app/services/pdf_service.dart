@@ -328,36 +328,101 @@ class PdfService {
   }
 
   pw.Widget _buildSkillSection(List<Skill> skills, bool isRtl) {
+    final categorySkills = SkillCategory.values
+        .map(
+          (category) => MapEntry(
+            category,
+            skills
+                .where((skill) => skill.category == category)
+                .toList()
+              ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
+          ),
+        )
+        .where((entry) => entry.value.isNotEmpty)
+        .toList();
+
     return pw.Column(
       crossAxisAlignment:
           isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Skills', isRtl),
         if (skills.isEmpty) pw.Text('No skills added yet'),
-        ...skills.map(
-          (skill) => pw.Row(
-            mainAxisAlignment: isRtl
-                ? pw.MainAxisAlignment.end
-                : pw.MainAxisAlignment.start,
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Container(
-                width: 6,
-                height: 6,
-                margin: const pw.EdgeInsets.only(top: 3),
-                decoration: const pw.BoxDecoration(
-                  shape: pw.BoxShape.circle,
-                  color: PdfColors.blueGrey800,
+        ...categorySkills.map(
+          (entry) => pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 8),
+            child: pw.Column(
+              crossAxisAlignment:
+                  isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  entry.key.name[0].toUpperCase() + entry.key.name.substring(1),
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
-              ),
-              pw.SizedBox(width: 8),
-              pw.Expanded(
-                child: pw.Text(
-                  '${skill.name} (${skill.level})',
-                  textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                pw.SizedBox(height: 6),
+                pw.Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: entry.value
+                      .map(
+                        (skill) => pw.Container(
+                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          decoration: pw.BoxDecoration(
+                            color: PdfColors.grey200,
+                            borderRadius: pw.BorderRadius.circular(14),
+                          ),
+                          child: pw.Row(
+                            mainAxisSize: pw.MainAxisSize.min,
+                            crossAxisAlignment: pw.CrossAxisAlignment.center,
+                            children: [
+                              pw.Text(
+                                skill.name,
+                                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                              ),
+                              if (skill.displayLevel.isNotEmpty) ...[
+                                pw.SizedBox(width: 6),
+                                pw.Container(
+                                  padding:
+                                      const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                  decoration: pw.BoxDecoration(
+                                    color: PdfColors.blue100,
+                                    borderRadius: pw.BorderRadius.circular(10),
+                                  ),
+                                  child: pw.Text(
+                                    skill.displayLevel,
+                                    style: const pw.TextStyle(fontSize: 9),
+                                  ),
+                                ),
+                              ],
+                              if (skill.levelProgress != null) ...[
+                                pw.SizedBox(width: 6),
+                                pw.Container(
+                                  width: 50,
+                                  height: 4,
+                                  decoration: pw.BoxDecoration(
+                                    color: PdfColors.grey400,
+                                    borderRadius: pw.BorderRadius.circular(2),
+                                  ),
+                                  child: pw.Align(
+                                    alignment: pw.Alignment.centerLeft,
+                                    child: pw.Container(
+                                      width: 50 * (skill.levelProgress ?? 0),
+                                      height: 4,
+                                      decoration: pw.BoxDecoration(
+                                        color: PdfColors.blue,
+                                        borderRadius: pw.BorderRadius.circular(2),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      )
+                      .toList(),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         pw.SizedBox(height: 16),
