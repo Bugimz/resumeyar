@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pdf/pdf.dart';
 
 import '../../data/repositories/education_repository.dart';
 import '../../data/repositories/interest_repository.dart';
@@ -40,6 +41,10 @@ class _SettingsViewState extends State<SettingsView> {
   final PremiumService _premiumService = Get.find<PremiumService>();
 
   List<ResumeSection> _sectionOrder = ResumeSection.values.toList();
+  Set<ResumeSection> _hiddenSections = <ResumeSection>{};
+  bool _showGpa = true;
+  PdfPageSize _pageSize = PdfPageSize.a4;
+  PdfThemeMode _pdfTheme = PdfThemeMode.light;
   bool _isLoading = true;
 
   bool get _isPremium => _premiumService.isPremium.value;
@@ -129,9 +134,19 @@ class _SettingsViewState extends State<SettingsView> {
 
   Future<void> _loadSectionOrder() async {
     final order = await _settingsService.loadResumeSectionOrder();
+    final hidden = await _settingsService.loadHiddenSections();
+    final showGpa = await _settingsService.loadGpaVisibility();
+    final pageFormat = await _settingsService.loadPageFormat();
+    final pdfTheme = await _settingsService.loadPdfTheme();
     if (!mounted) return;
     setState(() {
       _sectionOrder = order;
+      _hiddenSections = hidden;
+      _showGpa = showGpa;
+      _pdfTheme = pdfTheme;
+      _pageSize = pageFormat == PdfPageFormat.letter
+          ? PdfPageSize.letter
+          : PdfPageSize.a4;
       _isLoading = false;
     });
   }
@@ -148,6 +163,36 @@ class _SettingsViewState extends State<SettingsView> {
 
     await _settingsService.saveResumeSectionOrder(_sectionOrder);
     Get.snackbar('success'.tr, 'sections_order_saved'.tr);
+  }
+
+  Future<void> _toggleSectionVisibility(
+    ResumeSection section,
+    bool enabled,
+  ) async {
+    setState(() {
+      if (enabled) {
+        _hiddenSections.remove(section);
+      } else {
+        _hiddenSections.add(section);
+      }
+    });
+
+    await _settingsService.saveHiddenSections(_hiddenSections);
+  }
+
+  Future<void> _updateGpaVisibility(bool value) async {
+    setState(() => _showGpa = value);
+    await _settingsService.saveGpaVisibility(value);
+  }
+
+  Future<void> _updatePageSize(PdfPageSize size) async {
+    setState(() => _pageSize = size);
+    await _settingsService.savePageFormat(size);
+  }
+
+  Future<void> _updatePdfTheme(PdfThemeMode mode) async {
+    setState(() => _pdfTheme = mode);
+    await _settingsService.savePdfTheme(mode);
   }
 
   @override
@@ -224,6 +269,109 @@ class _SettingsViewState extends State<SettingsView> {
                               ],
                             );
                           }),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'pdf_export_settings'.tr,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'pdf_export_settings_subtitle'.tr,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 14),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 8,
+                            children: PdfPageSize.values
+                                .map(
+                                  (size) => ChoiceChip(
+                                    label: Text(size == PdfPageSize.a4
+                                        ? 'page_a4'.tr
+                                        : 'page_letter'.tr),
+                                    selected: _pageSize == size,
+                                    onSelected: (selected) {
+                                      if (!selected || _isLoading) return;
+                                      _updatePageSize(size);
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 8,
+                            children: PdfThemeMode.values
+                                .map(
+                                  (mode) => ChoiceChip(
+                                    label: Text(mode == PdfThemeMode.light
+                                        ? 'theme_light_pdf'.tr
+                                        : 'theme_dark_pdf'.tr),
+                                    selected: _pdfTheme == mode,
+                                    onSelected: (selected) {
+                                      if (!selected || _isLoading) return;
+                                      _updatePdfTheme(mode);
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          SwitchListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text('show_gpa_on_pdf'.tr),
+                            value: _showGpa,
+                            onChanged: _isLoading ? null : _updateGpaVisibility,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'section_visibility'.tr,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'section_visibility_subtitle'.tr,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          ...ResumeSection.values.map(
+                            (section) => SwitchListTile.adaptive(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(section.localizedLabel),
+                              subtitle: Text('include_in_pdf'.tr),
+                              value: !_hiddenSections.contains(section),
+                              onChanged: _isLoading
+                                  ? null
+                                  : (enabled) =>
+                                      _toggleSectionVisibility(section, enabled),
+                            ),
+                          ),
                         ],
                       ),
                     ),
