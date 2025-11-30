@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 
 import '../../data/models/education.dart';
 import '../../utils/validators.dart';
@@ -44,16 +45,25 @@ class EducationView extends GetView<EducationController> {
     isFormValid.value = false;
   }
 
-  void _addChipItem(TextEditingController controller, RxList<String> target) {
-    final entries = controller.text
-        .split(',')
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet();
+  String _formatDate(DateTime date) {
+    final twoDigits = (int value) => value.toString().padLeft(2, '0');
+    return '${date.year}-${twoDigits(date.month)}-${twoDigits(date.day)}';
+  }
 
-    if (entries.isNotEmpty) {
-      target.addAll(entries);
-      controller.clear();
+  Future<void> _pickDate(
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
+    final Jalali? picked = await showPersianDatePicker(
+      context: context,
+      initialDate: Jalali.now(),
+      firstDate: Jalali(1300, 1),
+      lastDate: Jalali(1500, 12),
+    );
+
+    if (picked != null) {
+      controller.text = _formatDate(picked.toDateTime());
+      _updateFormValidity();
     }
   }
 
@@ -195,35 +205,39 @@ class EducationView extends GetView<EducationController> {
                             width: fieldWidth,
                             child: TextFormField(
                               controller: startDateController,
-                              decoration:
-                                  InputDecoration(labelText: 'start_date'.tr),
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'start_date'.tr,
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () => _pickDate(
+                                    context,
+                                    startDateController,
+                                  ),
+                                ),
+                              ),
                               validator: FormValidators.date,
-                              onChanged: (_) => _updateFormValidity(),
                             ),
                           ),
                           SizedBox(
                             width: fieldWidth,
                             child: TextFormField(
                               controller: endDateController,
-                              decoration:
-                                  InputDecoration(labelText: 'end_date'.tr),
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'end_date'.tr,
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () => _pickDate(
+                                    context,
+                                    endDateController,
+                                  ),
+                                ),
+                              ),
                               validator: (_) => FormValidators.startBeforeEnd(
                                 start: startDateController.text,
                                 end: endDateController.text,
                               ),
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: sortOrderController,
-                              decoration:
-                                  InputDecoration(labelText: 'sort_order'.tr),
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(decimal: false),
-                              validator: FormValidators.optionalNumeric,
-                              onChanged: (_) => _updateFormValidity(),
                             ),
                           ),
                           SizedBox(
@@ -235,57 +249,6 @@ class EducationView extends GetView<EducationController> {
                               validator: FormValidators.requiredField,
                               maxLines: 3,
                               onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: gpaController,
-                                    decoration:
-                                        InputDecoration(labelText: 'gpa_label'.tr),
-                                    keyboardType:
-                                        const TextInputType.numberWithOptions(decimal: true),
-                                    validator: FormValidators.optionalNumeric,
-                                    onChanged: (_) => _updateFormValidity(),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Obx(
-                                  () => Column(
-                                    children: [
-                                      Text(showGpa.value
-                                          ? 'gpa_visible'.tr
-                                          : 'gpa_hidden'.tr),
-                                      Switch(
-                                        value: showGpa.value,
-                                        onChanged: (value) => showGpa.value = value,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: _ChipEditor(
-                              label: 'honors_label'.tr,
-                              controller: honorController,
-                              values: honors,
-                              onAdd: () => _addChipItem(honorController, honors),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: _ChipEditor(
-                              label: 'courses_label'.tr,
-                              controller: courseController,
-                              values: courses,
-                              onAdd: () => _addChipItem(courseController, courses),
                             ),
                           ),
                           SizedBox(
@@ -340,60 +303,13 @@ class EducationView extends GetView<EducationController> {
                           return Card(
                             child: ListTile(
                               title: Text('${education.school} • ${education.degree}'),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                      '${education.fieldOfStudy}\n${education.startDate} - ${education.endDate}'),
-                                  const SizedBox(height: 4),
-                                  Text(education.description),
-                                  if (education.showGpa && education.gpa != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        '${'gpa_label'.tr}: ${education.gpa!.toStringAsFixed(2)}',
-                                      ),
-                                    ),
-                                  if (education.honors.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 6),
-                                      child: Wrap(
-                                        spacing: 8,
-                                        runSpacing: 6,
-                                        children: education.honors
-                                            .map((honor) => Chip(label: Text(honor)))
-                                            .toList(),
-                                      ),
-                                    ),
-                                  if (education.courses.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 6),
-                                      child: Wrap(
-                                        spacing: 8,
-                                        runSpacing: 6,
-                                        children: education.courses
-                                            .map((course) => Chip(label: Text(course)))
-                                            .toList(),
-                                      ),
-                                    ),
-                                ],
+                              subtitle: Text(
+                                '${education.fieldOfStudy}\n${education.startDate} - ${education.endDate}\n${education.description}',
                               ),
-                              isThreeLine: false,
+                              isThreeLine: true,
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.arrow_upward),
-                                    tooltip: 'move_up'.tr,
-                                    onPressed: () => controller
-                                        .updateSortOrder(education, -1),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.arrow_downward),
-                                    tooltip: 'move_down'.tr,
-                                    onPressed: () => controller
-                                        .updateSortOrder(education, 1),
-                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.edit),
                                     onPressed: () {
@@ -407,13 +323,6 @@ class EducationView extends GetView<EducationController> {
                                       endDateController.text = education.endDate;
                                       descriptionController.text =
                                           education.description;
-                                      gpaController.text =
-                                          education.gpa?.toString() ?? '';
-                                      honors.assignAll(education.honors);
-                                      courses.assignAll(education.courses);
-                                      showGpa.value = education.showGpa;
-                                      sortOrderController.text =
-                                          education.sortOrder.toString();
                                       _updateFormValidity();
                                     },
                                   ),

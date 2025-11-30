@@ -133,110 +133,12 @@ class SkillView extends GetView<SkillController> {
                           ),
                           SizedBox(
                             width: fieldWidth,
-                            child: Obx(
-                              () => DropdownButtonFormField<SkillCategory>(
-                                value: selectedCategory.value,
-                                decoration:
-                                    InputDecoration(labelText: 'skill_category_label'.tr),
-                                items: SkillCategory.values
-                                    .map(
-                                      (category) => DropdownMenuItem(
-                                        value: category,
-                                        child: Text('category_${category.name}'.tr),
-                                      ),
-                                    )
-                                    .toList(),
-                                onChanged: (value) {
-                                  if (value != null) {
-                                    selectedCategory.value = value;
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: Obx(
-                              () => Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    child: Text(
-                                      'level_label'.tr,
-                                      style: theme.textTheme.bodySmall,
-                                    ),
-                                  ),
-                                  Wrap(
-                                    spacing: 8,
-                                    children: [
-                                      ChoiceChip(
-                                        label: Text('level_numeric'.tr),
-                                        selected: levelMode.value == 'numeric',
-                                        onSelected: (_) {
-                                          levelMode.value = 'numeric';
-                                          selectedProficiency.value = null;
-                                          _updateFormValidity();
-                                        },
-                                      ),
-                                      ChoiceChip(
-                                        label: Text('level_proficiency'.tr),
-                                        selected: levelMode.value == 'proficiency',
-                                        onSelected: (_) {
-                                          levelMode.value = 'proficiency';
-                                          _updateFormValidity();
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  if (levelMode.value == 'numeric')
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Slider(
-                                          value: numericLevel.value.toDouble(),
-                                          min: 1,
-                                          max: 5,
-                                          divisions: 4,
-                                          label: numericLevel.value.toString(),
-                                          onChanged: (value) {
-                                            numericLevel.value = value.round();
-                                            _updateFormValidity();
-                                          },
-                                        ),
-                                        Text('level_value'.trParams(
-                                            {'value': numericLevel.value.toString()})),
-                                      ],
-                                    )
-                                  else
-                                    DropdownButtonFormField<SkillProficiency>(
-                                      value: selectedProficiency.value,
-                                      decoration: InputDecoration(
-                                          labelText: 'level_proficiency'.tr),
-                                      items: SkillProficiency.values
-                                          .map(
-                                            (proficiency) => DropdownMenuItem(
-                                              value: proficiency,
-                                              child: Text(
-                                                'proficiency_${proficiency.name}'.tr,
-                                              ),
-                                            ),
-                                          )
-                                          .toList(),
-                                      onChanged: (value) {
-                                        selectedProficiency.value = value;
-                                        _updateFormValidity();
-                                      },
-                                      validator: (value) {
-                                        if (levelMode.value == 'proficiency' && value == null) {
-                                          return 'required_field'.tr;
-                                        }
-                                        return null;
-                                      },
-                                    ),
-                                ],
-                              ),
+                            child: TextFormField(
+                              controller: levelController,
+                              decoration:
+                                  InputDecoration(labelText: 'level_label'.tr),
+                              validator: FormValidators.requiredField,
+                              onChanged: (_) => _updateFormValidity(),
                             ),
                           ),
                           SizedBox(
@@ -282,85 +184,44 @@ class SkillView extends GetView<SkillController> {
                         return Text('no_skills'.tr);
                       }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: SkillCategory.values.map((category) {
-                          final categorySkills = skills
-                              .where((skill) => skill.category == category)
-                              .toList()
-                            ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-
-                          if (categorySkills.isEmpty) {
-                            return const SizedBox.shrink();
-                          }
-
-                          final sectionContent = Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 12,
-                              children: categorySkills
-                                  .map((skill) => _SkillChip(
-                                        skill: skill,
-                                        onEdit: () {
-                                          editingSkill.value = skill;
-                                          profileIdController.text =
-                                              skill.profileId.toString();
-                                          nameController.text = skill.name;
-                                          selectedCategory.value = skill.category;
-                                          if (skill.levelValue != null) {
-                                            levelMode.value = 'numeric';
-                                            numericLevel.value = skill.levelValue!;
-                                          } else {
-                                            levelMode.value = 'proficiency';
-                                            selectedProficiency.value = skill.proficiency;
-                                          }
-                                          _updateFormValidity();
-                                        },
-                                        onDelete: () async {
-                                          if (skill.id != null) {
-                                            await controller.delete(skill.id!);
-                                          }
-                                        },
-                                        onReorder: (dragged) async {
-                                          await controller.reorderWithinCategory(
-                                            dragged: dragged,
-                                            target: skill,
-                                          );
-                                        },
-                                      ))
-                                  .toList(),
-                            ),
-                          );
-
-                          final title = Text(
-                            'category_${category.name}'.tr,
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.w600),
-                          );
-
-                          if (!isWide) {
-                            return Card(
-                              child: ExpansionTile(
-                                title: title,
-                                children: [sectionContent],
-                              ),
-                            );
-                          }
-
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: skills.length,
+                        itemBuilder: (context, index) {
+                          final skill = skills[index];
                           return Card(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: title,
-                                ),
-                                sectionContent,
-                              ],
+                            child: ListTile(
+                              title: Text(skill.name),
+                              subtitle:
+                                  Text('${'level_label'.tr}: ${skill.level}'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      editingSkill.value = skill;
+                                      profileIdController.text =
+                                          skill.profileId.toString();
+                                      nameController.text = skill.name;
+                                      levelController.text = skill.level;
+                                      _updateFormValidity();
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () async {
+                                      if (skill.id != null) {
+                                        await controller.delete(skill.id!);
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
                           );
-                        }).toList(),
+                        },
                       );
                     }),
                   ],
@@ -369,57 +230,6 @@ class SkillView extends GetView<SkillController> {
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _SkillChip extends StatelessWidget {
-  const _SkillChip({
-    required this.skill,
-    required this.onEdit,
-    required this.onDelete,
-    required this.onReorder,
-  });
-
-  final Skill skill;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-  final ValueChanged<Skill> onReorder;
-
-  Color _levelColor(BuildContext context) {
-    switch (skill.proficiency) {
-      case SkillProficiency.beginner:
-        return Colors.orange.shade200;
-      case SkillProficiency.intermediate:
-        return Colors.blue.shade200;
-      case SkillProficiency.expert:
-        return Colors.green.shade200;
-      case null:
-        final progress = skill.levelProgress ?? 0;
-        return Color.lerp(Colors.orange, Colors.green, progress) ??
-            Theme.of(context).colorScheme.primary;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final levelLabel = skill.displayLevel;
-    final progress = skill.levelProgress;
-
-    return LongPressDraggable<Skill>(
-      data: skill,
-      feedback: Material(
-        color: Colors.transparent,
-        child: _ChipContent(
-          skill: skill,
-          levelLabel: levelLabel,
-          progress: progress,
-          isDragging: true,
-          levelColor: _levelColor(context),
-          onEdit: onEdit,
-          onDelete: onDelete,
-        ),
       ),
       child: DragTarget<Skill>(
         onWillAccept: (dragged) =>

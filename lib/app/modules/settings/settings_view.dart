@@ -170,15 +170,6 @@ class _SettingsViewState extends State<SettingsView> {
       final content = await File(filePath).readAsString();
       await widget._backupService.importFromJson(content);
 
-      await _settingsService.saveLastBackup(
-        path: filePath,
-        destination: _backupDestination,
-      );
-      setState(() {
-        _lastBackupLocation = filePath;
-        _lastBackupTime = DateTime.now();
-      });
-
       Get.snackbar('success'.tr, 'backup_restored'.tr);
     } on FormatException catch (e) {
       Get.snackbar('error'.tr, 'invalid_backup_format'.trParams({'error': '$e'}));
@@ -322,7 +313,6 @@ class _SettingsViewState extends State<SettingsView> {
                     isPremium: isPremium,
                     onUpgrade: _premiumService.buyPremium,
                     isWide: isWide,
-                    billingService: _premiumService.billingService,
                   ),
                   const SizedBox(height: 16),
                   Card(
@@ -344,57 +334,6 @@ class _SettingsViewState extends State<SettingsView> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 8,
-                            children: BackupDestination.values
-                                .map(
-                                  (dest) => ChoiceChip(
-                                    label: Text(dest == BackupDestination.local
-                                        ? 'local_storage'.tr
-                                        : 'cloud_storage'.tr),
-                                    selected: _backupDestination == dest,
-                                    onSelected: (selected) {
-                                      if (!selected) return;
-                                      setState(() => _backupDestination = dest);
-                                    },
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.history, size: 18),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  _buildLastBackupLabel(context),
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (_backupError != null) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.error_outline, color: Colors.red),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    _backupError!,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(color: Colors.red),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                          const SizedBox(height: 12),
                           LayoutBuilder(builder: (context, innerConstraints) {
                             final buttonWidth = innerConstraints.maxWidth > 500
                                 ? (innerConstraints.maxWidth - 12) / 2
@@ -406,20 +345,9 @@ class _SettingsViewState extends State<SettingsView> {
                                 SizedBox(
                                   width: buttonWidth,
                                   child: FilledButton.icon(
-                                    onPressed: _isBackingUp ? null : _saveBackup,
-                                    icon: _isBackingUp
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const Icon(Icons.save_alt),
-                                    label: Text(_isBackingUp
-                                        ? 'backing_up'.tr
-                                        : 'save_backup'.tr),
+                                    onPressed: _saveBackup,
+                                    icon: const Icon(Icons.save_alt),
+                                    label: Text('save_backup'.tr),
                                     style: FilledButton.styleFrom(
                                       minimumSize: const Size.fromHeight(52),
                                     ),
@@ -428,21 +356,9 @@ class _SettingsViewState extends State<SettingsView> {
                                 SizedBox(
                                   width: buttonWidth,
                                   child: FilledButton.icon(
-                                    onPressed:
-                                        _isRestoring ? null : _restoreBackup,
-                                    icon: _isRestoring
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const Icon(Icons.restore),
-                                    label: Text(_isRestoring
-                                        ? 'restoring'.tr
-                                        : 'restore_backup'.tr),
+                                    onPressed: _restoreBackup,
+                                    icon: const Icon(Icons.restore),
+                                    label: Text('restore_backup'.tr),
                                     style: FilledButton.styleFrom(
                                       minimumSize: const Size.fromHeight(52),
                                     ),
@@ -451,109 +367,6 @@ class _SettingsViewState extends State<SettingsView> {
                               ],
                             );
                           }),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'pdf_export_settings'.tr,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'pdf_export_settings_subtitle'.tr,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 8,
-                            children: PdfPageSize.values
-                                .map(
-                                  (size) => ChoiceChip(
-                                    label: Text(size == PdfPageSize.a4
-                                        ? 'page_a4'.tr
-                                        : 'page_letter'.tr),
-                                    selected: _pageSize == size,
-                                    onSelected: (selected) {
-                                      if (!selected || _isLoading) return;
-                                      _updatePageSize(size);
-                                    },
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                          const SizedBox(height: 12),
-                          Wrap(
-                            spacing: 10,
-                            runSpacing: 8,
-                            children: PdfThemeMode.values
-                                .map(
-                                  (mode) => ChoiceChip(
-                                    label: Text(mode == PdfThemeMode.light
-                                        ? 'theme_light_pdf'.tr
-                                        : 'theme_dark_pdf'.tr),
-                                    selected: _pdfTheme == mode,
-                                    onSelected: (selected) {
-                                      if (!selected || _isLoading) return;
-                                      _updatePdfTheme(mode);
-                                    },
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                          const SizedBox(height: 12),
-                          SwitchListTile.adaptive(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text('show_gpa_on_pdf'.tr),
-                            value: _showGpa,
-                            onChanged: _isLoading ? null : _updateGpaVisibility,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'section_visibility'.tr,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w800),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'section_visibility_subtitle'.tr,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          ...ResumeSection.values.map(
-                            (section) => SwitchListTile.adaptive(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(section.localizedLabel),
-                              subtitle: Text('include_in_pdf'.tr),
-                              value: !_hiddenSections.contains(section),
-                              onChanged: _isLoading
-                                  ? null
-                                  : (enabled) =>
-                                      _toggleSectionVisibility(section, enabled),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -609,17 +422,12 @@ class _SettingsViewState extends State<SettingsView> {
 }
 
 class _SettingsHero extends StatelessWidget {
-  const _SettingsHero({
-    required this.isPremium,
-    required this.onUpgrade,
-    required this.isWide,
-    required this.billingService,
-  });
+  const _SettingsHero(
+      {required this.isPremium, required this.onUpgrade, required this.isWide});
 
   final bool isPremium;
   final Future<void> Function() onUpgrade;
   final bool isWide;
-  final BillingService billingService;
 
   @override
   Widget build(BuildContext context) {
@@ -647,77 +455,6 @@ class _SettingsHero extends StatelessWidget {
           isPremium ? 'hero_premium_body'.tr : 'premium_backup_message'.tr,
           style:
               theme.textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.9)),
-        ),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 6,
-          children: [
-            Chip(
-              label: Text('extra_templates'.tr),
-              backgroundColor: Colors.white.withOpacity(0.18),
-              side: BorderSide(color: Colors.white.withOpacity(0.2)),
-              labelStyle: theme.textTheme.bodySmall
-                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-            ),
-            Chip(
-              label: Text('unlimited_sections'.tr),
-              backgroundColor: Colors.white.withOpacity(0.18),
-              side: BorderSide(color: Colors.white.withOpacity(0.2)),
-              labelStyle: theme.textTheme.bodySmall
-                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        ValueListenableBuilder<bool>(
-          valueListenable: billingService.isConnecting,
-          builder: (context, connecting, _) {
-            return ValueListenableBuilder<bool>(
-              valueListenable: billingService.isConnectedNotifier,
-              builder: (context, connected, __) {
-                final color = connecting
-                    ? Colors.white
-                    : connected
-                        ? Colors.lightGreenAccent
-                        : Colors.orangeAccent;
-                final icon = connecting
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation(Colors.white),
-                        ),
-                      )
-                    : Icon(
-                        connected ? Icons.wifi : Icons.wifi_off,
-                        color: color,
-                        size: 18,
-                      );
-
-                final statusText = connecting
-                    ? 'billing_connecting'.tr
-                    : connected
-                        ? 'billing_connected'.tr
-                        : 'billing_disconnected'.tr;
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    icon,
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        statusText,
-                        style: theme.textTheme.labelMedium
-                            ?.copyWith(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            );
-          },
         ),
         const SizedBox(height: 12),
         if (!isPremium)

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 
 import '../../data/models/work_experience.dart';
 import '../../utils/validators.dart';
@@ -32,6 +33,28 @@ class WorkView extends GetView<WorkController> {
     techTagsController.clear();
     metricController.clear();
     isFormValid.value = false;
+  }
+
+  String _formatDate(DateTime date) {
+    final twoDigits = (int value) => value.toString().padLeft(2, '0');
+    return '${date.year}-${twoDigits(date.month)}-${twoDigits(date.day)}';
+  }
+
+  Future<void> _pickDate(
+    BuildContext context,
+    TextEditingController controller,
+  ) async {
+    final Jalali? picked = await showPersianDatePicker(
+      context: context,
+      initialDate: Jalali.now(),
+      firstDate: Jalali(1300, 1),
+      lastDate: Jalali(1500, 12),
+    );
+
+    if (picked != null) {
+      controller.text = _formatDate(picked.toDateTime());
+      _updateFormValidity();
+    }
   }
 
   void _updateFormValidity() {
@@ -171,23 +194,39 @@ class WorkView extends GetView<WorkController> {
                             width: fieldWidth,
                             child: TextFormField(
                               controller: startDateController,
-                              decoration:
-                                  InputDecoration(labelText: 'start_date'.tr),
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'start_date'.tr,
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () => _pickDate(
+                                    context,
+                                    startDateController,
+                                  ),
+                                ),
+                              ),
                               validator: FormValidators.date,
-                              onChanged: (_) => _updateFormValidity(),
                             ),
                           ),
                           SizedBox(
                             width: fieldWidth,
                             child: TextFormField(
                               controller: endDateController,
-                              decoration:
-                                  InputDecoration(labelText: 'end_date'.tr),
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'end_date'.tr,
+                                suffixIcon: IconButton(
+                                  icon: const Icon(Icons.calendar_today),
+                                  onPressed: () => _pickDate(
+                                    context,
+                                    endDateController,
+                                  ),
+                                ),
+                              ),
                               validator: (_) => FormValidators.startBeforeEnd(
                                 start: startDateController.text,
                                 end: endDateController.text,
                               ),
-                              onChanged: (_) => _updateFormValidity(),
                             ),
                           ),
                           SizedBox(
@@ -198,43 +237,6 @@ class WorkView extends GetView<WorkController> {
                                   labelText: 'description_label'.tr),
                               validator: FormValidators.requiredField,
                               maxLines: 3,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: achievementsController,
-                              decoration: const InputDecoration(
-                                labelText: 'Achievements (3-5 bullet points)',
-                                hintText:
-                                    'E.g., Increased uptime by 20% through...\nReduced costs by 15% by...',
-                              ),
-                              validator: FormValidators.achievementBullets,
-                              maxLines: 5,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: techTagsController,
-                              decoration: const InputDecoration(
-                                labelText: 'Tech tags (comma separated)',
-                                hintText: 'e.g., Flutter, GetX, Firebase',
-                              ),
-                              validator: FormValidators.tagList,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: metricController,
-                              decoration: const InputDecoration(
-                                labelText: 'Key metric (optional)',
-                                hintText: 'e.g., 250K monthly users',
-                              ),
                               onChanged: (_) => _updateFormValidity(),
                             ),
                           ),
@@ -291,40 +293,9 @@ class WorkView extends GetView<WorkController> {
                             child: ListTile(
                               title: Text(
                                   '${experience.company} • ${experience.position}'),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                      '${experience.startDate} - ${experience.endDate}'),
-                                  const SizedBox(height: 6),
-                                  Text(experience.description),
-                                  if (experience.metric != null &&
-                                      experience.metric!.isNotEmpty)
-                                    Padding(
-                                      padding:
-                                          const EdgeInsets.only(top: 6, bottom: 2),
-                                      child: Text('Metric: ${experience.metric}'),
-                                    ),
-                                  const SizedBox(height: 8),
-                                  Text('Achievements',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge),
-                                  const SizedBox(height: 6),
-                                  _buildAchievementsSection(
-                                    experience.achievements,
-                                    isWide,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text('Tech tags',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelLarge),
-                                  const SizedBox(height: 6),
-                                  _buildTechTags(experience.techTags),
-                                ],
-                              ),
-                              isThreeLine: false,
+                              subtitle: Text(
+                                  '${experience.startDate} - ${experience.endDate}\n${experience.description}'),
+                              isThreeLine: true,
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -344,12 +315,6 @@ class WorkView extends GetView<WorkController> {
                                           experience.endDate;
                                       descriptionController.text =
                                           experience.description;
-                                      achievementsController.text =
-                                          experience.achievements.join('\n');
-                                      techTagsController.text =
-                                          experience.techTags.join(', ');
-                                      metricController.text =
-                                          experience.metric ?? '';
                                       _updateFormValidity();
                                     },
                                   ),
