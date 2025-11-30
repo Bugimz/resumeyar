@@ -11,14 +11,20 @@ class SkillView extends GetView<SkillController> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController profileIdController = TextEditingController(text: '1');
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController levelController = TextEditingController();
   final Rxn<Skill> editingSkill = Rxn<Skill>();
+  final Rx<SkillCategory> selectedCategory = SkillCategory.language.obs;
+  final RxString levelMode = 'numeric'.obs;
+  final RxInt numericLevel = 3.obs;
+  final Rxn<SkillProficiency> selectedProficiency = Rxn<SkillProficiency>();
   final RxBool isFormValid = false.obs;
 
   void _resetForm() {
     editingSkill.value = null;
     nameController.clear();
-    levelController.clear();
+    selectedCategory.value = SkillCategory.language;
+    levelMode.value = 'numeric';
+    numericLevel.value = 3;
+    selectedProficiency.value = null;
     isFormValid.value = false;
   }
 
@@ -61,7 +67,10 @@ class SkillView extends GetView<SkillController> {
       id: editingSkill.value?.id,
       profileId: profileId,
       name: nameController.text,
-      level: levelController.text,
+      category: selectedCategory.value,
+      levelValue: levelMode.value == 'numeric' ? numericLevel.value : null,
+      proficiency: levelMode.value == 'proficiency' ? selectedProficiency.value : null,
+      sortOrder: editingSkill.value?.sortOrder ?? -1,
     );
 
     if (editingSkill.value == null) {
@@ -75,6 +84,7 @@ class SkillView extends GetView<SkillController> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('skills'.tr),
@@ -220,6 +230,125 @@ class SkillView extends GetView<SkillController> {
             ),
           );
         },
+      ),
+      child: DragTarget<Skill>(
+        onWillAccept: (dragged) =>
+            dragged?.id != skill.id && dragged?.category == skill.category,
+        onAccept: onReorder,
+        builder: (context, candidate, rejected) {
+          return _ChipContent(
+            skill: skill,
+            levelLabel: levelLabel,
+            progress: progress,
+            isHighlighted: candidate.isNotEmpty,
+            levelColor: _levelColor(context),
+            onEdit: onEdit,
+            onDelete: onDelete,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _ChipContent extends StatelessWidget {
+  const _ChipContent({
+    required this.skill,
+    required this.levelLabel,
+    required this.progress,
+    required this.levelColor,
+    this.isHighlighted = false,
+    this.isDragging = false,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final Skill skill;
+  final String levelLabel;
+  final double? progress;
+  final Color levelColor;
+  final bool isHighlighted;
+  final bool isDragging;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final chipColor = isHighlighted
+        ? Theme.of(context).colorScheme.primary.withOpacity(0.12)
+        : Theme.of(context).chipTheme.backgroundColor ?? Colors.grey.shade200;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      decoration: BoxDecoration(
+        color: chipColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+            color: isHighlighted
+                ? Theme.of(context).colorScheme.primary
+                : Colors.transparent),
+        boxShadow: isDragging
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          Icon(Icons.drag_indicator, size: 16, color: Colors.grey.shade600),
+          Text(
+            skill.name,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          if (levelLabel.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: levelColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                levelLabel,
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ),
+          if (progress != null)
+            SizedBox(
+              width: 70,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: AlwaysStoppedAnimation<Color>(levelColor),
+                ),
+              ),
+            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18),
+                tooltip: 'edit'.tr,
+                onPressed: onEdit,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, size: 18),
+                tooltip: 'delete'.tr,
+                onPressed: onDelete,
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

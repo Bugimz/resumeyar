@@ -17,8 +17,15 @@ class EducationView extends GetView<EducationController> {
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController gpaController = TextEditingController();
+  final TextEditingController honorController = TextEditingController();
+  final TextEditingController courseController = TextEditingController();
+  final TextEditingController sortOrderController = TextEditingController();
   final Rxn<Education> editingEducation = Rxn<Education>();
   final RxBool isFormValid = false.obs;
+  final RxBool showGpa = false.obs;
+  final RxList<String> honors = <String>[].obs;
+  final RxList<String> courses = <String>[].obs;
 
   void _resetForm() {
     editingEducation.value = null;
@@ -28,6 +35,13 @@ class EducationView extends GetView<EducationController> {
     startDateController.clear();
     endDateController.clear();
     descriptionController.clear();
+    gpaController.clear();
+    honorController.clear();
+    courseController.clear();
+    sortOrderController.clear();
+    honors.clear();
+    courses.clear();
+    showGpa.value = false;
     isFormValid.value = false;
   }
 
@@ -88,6 +102,11 @@ class EducationView extends GetView<EducationController> {
       return;
     }
 
+    final parsedSortOrder = int.tryParse(sortOrderController.text);
+    final defaultSortOrder = controller.educations
+        .where((element) => element.school == schoolController.text)
+        .length;
+
     final education = Education(
       id: editingEducation.value?.id,
       profileId: profileId,
@@ -97,6 +116,11 @@ class EducationView extends GetView<EducationController> {
       startDate: startDateController.text,
       endDate: endDateController.text,
       description: descriptionController.text,
+      gpa: double.tryParse(gpaController.text),
+      showGpa: showGpa.value,
+      honors: honors.toList(),
+      courses: courses.toList(),
+      sortOrder: parsedSortOrder ?? defaultSortOrder,
     );
 
     if (editingEducation.value == null) {
@@ -324,6 +348,55 @@ class EducationView extends GetView<EducationController> {
           );
         },
       ),
+    );
+  }
+}
+
+class _ChipEditor extends StatelessWidget {
+  const _ChipEditor({
+    required this.label,
+    required this.controller,
+    required this.values,
+    required this.onAdd,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final RxList<String> values;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: onAdd,
+            ),
+          ),
+          onFieldSubmitted: (_) => onAdd(),
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () => Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: values
+                .map(
+                  (value) => InputChip(
+                    label: Text(value),
+                    onDeleted: () => values.remove(value),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ],
     );
   }
 }
