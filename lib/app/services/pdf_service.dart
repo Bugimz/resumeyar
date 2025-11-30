@@ -75,15 +75,18 @@ class PdfService {
     required ResumeTemplate template,
     bool isRtl = false,
   }) async {
+    // ۱) گرفتن داده‌ها
     final ResumeProfile? profile = await _getPrimaryProfile();
     final List<WorkExperience> workExperiences =
         await workExperienceRepository.getAll();
     final List<Education> educations = await educationRepository.getAll();
-    final List<Certification> certifications = await certificationRepository.getAll();
+    final List<Certification> certifications =
+        await certificationRepository.getAll();
     final List<Language> languages = await languageRepository.getAll();
     final List<Interest> interests = await interestRepository.getAll();
     final List<Skill> skills = await skillRepository.getAll();
     final List<Project> projects = await projectRepository.getAll();
+
     final List<ResumeSection> sectionOrder =
         await settingsService.loadResumeSectionOrder();
     final Set<ResumeSection> hiddenSections =
@@ -94,31 +97,33 @@ class PdfService {
     final Map<String, pw.MemoryImage> projectImages =
         await _loadProjectImages(projects);
 
-    final filteredSectionOrder =
-        sectionOrder.where((section) => !hiddenSections.contains(section)).toList();
-    final palette = _paletteFor(pdfTheme);
-    _currentPalette = palette;
+    final filteredSectionOrder = sectionOrder
+        .where((section) => !hiddenSections.contains(section))
+        .toList();
+
+    // ۲) پالت رنگ
+    _currentPalette = _paletteFor(pdfTheme);
+
     final margin = pageFormat == PdfPageFormat.a4
         ? const pw.EdgeInsets.fromLTRB(32, 36, 32, 36)
         : const pw.EdgeInsets.fromLTRB(28, 32, 28, 32);
 
+    // ۳) فونت‌ها
     final baseFont = await PdfGoogleFonts.vazirmatnRegular();
     final boldFont = await PdfGoogleFonts.vazirmatnBold();
+
     final pageTheme = pw.PageTheme(
       pageFormat: pageFormat,
       margin: margin,
       textDirection: isRtl ? pw.TextDirection.rtl : pw.TextDirection.ltr,
-      buildBackground: (context) => pw.Container(color: palette.background),
+      buildBackground: (context) =>
+          pw.Container(color: _currentPalette.background),
     );
 
     final pdf = pw.Document(
       theme: pw.ThemeData.withFont(
         base: baseFont,
         bold: boldFont,
-        defaultTextStyle: pw.TextStyle(
-          color: palette.text,
-          fontSize: 11.5,
-        ),
       ),
     );
 
@@ -127,39 +132,26 @@ class PdfService {
       fontSize: 11.5,
     );
 
+    // ۴) ساخت صفحه
     pdf.addPage(
       pw.MultiPage(
         pageTheme: pageTheme,
         build: (context) {
-          final children = switch (template) {
-            ResumeTemplate.minimal => _buildMinimalTemplate(
-                profile,
-                workExperiences,
-                educations,
-                skills,
-                projects,
-                isRtl,
-                sectionOrder,
-              ),
-            ResumeTemplate.modern => _buildModernTemplate(
-                profile,
-                workExperiences,
-                educations,
-                skills,
-                projects,
-                isRtl,
-                sectionOrder,
-              ),
-            ResumeTemplate.elegant => _buildElegantTemplate(
-                profile,
-                workExperiences,
-                educations,
-                skills,
-                projects,
-                isRtl,
-                sectionOrder,
-              ),
-          };
+          final children = _buildSectionsByOrder(
+            filteredSectionOrder,
+            template,
+            profile,
+            workExperiences,
+            educations,
+            certifications,
+            languages,
+            interests,
+            skills,
+            projects,
+            isRtl,
+            showGpa,
+            projectImages,
+          );
 
           return [
             pw.DefaultTextStyle.merge(
@@ -244,6 +236,82 @@ class PdfService {
     return profiles.first;
   }
 
+  // ------------------ ساخت سِکشِن‌ها ------------------
+
+  List<pw.Widget> _buildSectionsByOrder(
+    List<ResumeSection> sectionOrder,
+    ResumeTemplate template,
+    ResumeProfile? profile,
+    List<WorkExperience> workExperiences,
+    List<Education> educations,
+    List<Certification> certifications,
+    List<Language> languages,
+    List<Interest> interests,
+    List<Skill> skills,
+    List<Project> projects,
+    bool isRtl,
+    bool showGpa,
+    Map<String, pw.MemoryImage> projectImages,
+  ) {
+    final List<pw.Widget> widgets = [];
+
+    for (var i = 0; i < sectionOrder.length; i++) {
+      final section = sectionOrder[i];
+
+      final sectionWidget = switch (section) {
+        ResumeSection.profile => switch (template) {
+            ResumeTemplate.modern when profile != null =>
+              _buildModernHeader(profile, isRtl),
+            ResumeTemplate.elegant when profile != null =>
+              _buildElegantHeader(profile, isRtl),
+            ResumeTemplate.ats when profile != null =>
+              _buildAtsHeader(profile, isRtl),
+            _ => _buildProfileSection(profile, isRtl),
+          },
+        ResumeSection.workExperience =>
+          _buildExperienceSection(workExperiences, isRtl),
+        ResumeSection.education =>
+          _buildEducationSection(educations, isRtl, showGpa),
+        ResumeSection.certifications =>
+          _buildCertificationSection(certifications, isRtl),
+        ResumeSection.languages => _buildLanguageSection(languages, isRtl),
+        ResumeSection.interests => _buildInterestSection(interests, isRtl),
+        ResumeSection.skills => _buildSkillSection(skills, isRtl),
+        ResumeSection.projects =>
+          _buildProjectSection(projects, isRtl, projectImages),
+      };
+
+      widgets.add(sectionWidget);
+
+      if (i != sectionOrder.length - 1) {
+        widgets.add(_buildTemplateDivider(template));
+      }
+    }
+
+    return widgets;
+  }
+
+  pw.Widget _buildTemplateDivider(ResumeTemplate template) {
+    switch (template) {
+      case ResumeTemplate.modern:
+        return pw.Divider();
+      case ResumeTemplate.elegant:
+        return pw.Divider(
+          color: PdfColors.blueGrey300,
+          thickness: 0.7,
+        );
+      case ResumeTemplate.ats:
+        return pw.Divider(
+          color: _currentPalette.border,
+          thickness: 0.5,
+        );
+      case ResumeTemplate.minimal:
+      default:
+        // برای تم مینیمال فقط کمی فاصله
+        return pw.SizedBox(height: 8);
+    }
+  }
+
   pw.Widget _buildSectionTitle(String title, bool isRtl) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 8),
@@ -290,9 +358,8 @@ class PdfService {
     final List<pw.Widget> items = [];
 
     void addItem(String value, int iconCode) {
-      if (value.isEmpty) {
-        return;
-      }
+      if (value.isEmpty) return;
+
       items.add(
         pw.Row(
           mainAxisSize: pw.MainAxisSize.min,
@@ -461,15 +528,17 @@ class PdfService {
                       spacing: 8,
                       runSpacing: 4,
                       children: education.honors
-                          .map((honor) => pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: pw.BoxDecoration(
-                                  borderRadius: pw.BorderRadius.circular(12),
-                                  color: PdfColor.fromHex('#e0f7fa'),
-                                ),
-                                child: pw.Text(honor),
-                              ))
+                          .map(
+                            (honor) => pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: pw.BoxDecoration(
+                                borderRadius: pw.BorderRadius.circular(12),
+                                color: PdfColor.fromHex('#e0f7fa'),
+                              ),
+                              child: pw.Text(honor),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -480,15 +549,17 @@ class PdfService {
                       spacing: 8,
                       runSpacing: 4,
                       children: education.courses
-                          .map((course) => pw.Container(
-                                padding: const pw.EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: pw.BoxDecoration(
-                                  borderRadius: pw.BorderRadius.circular(12),
-                                  color: PdfColor.fromHex('#e8eaf6'),
-                                ),
-                                child: pw.Text(course),
-                              ))
+                          .map(
+                            (course) => pw.Container(
+                              padding: const pw.EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: pw.BoxDecoration(
+                                borderRadius: pw.BorderRadius.circular(12),
+                                color: PdfColor.fromHex('#e8eaf6'),
+                              ),
+                              child: pw.Text(course),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -503,7 +574,9 @@ class PdfService {
   }
 
   pw.Widget _buildCertificationSection(
-      List<Certification> certifications, bool isRtl) {
+    List<Certification> certifications,
+    bool isRtl,
+  ) {
     return pw.Column(
       crossAxisAlignment:
           isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
@@ -537,7 +610,8 @@ class PdfService {
                           color: PdfColors.blue,
                           decoration: pw.TextDecoration.underline,
                         ),
-                        textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                        textAlign:
+                            isRtl ? pw.TextAlign.right : pw.TextAlign.left,
                       ),
                     ),
                   ),
@@ -563,11 +637,12 @@ class PdfService {
           children: languages
               .map(
                 (language) => pw.Container(
-                  padding:
-                      const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 8),
                   decoration: pw.BoxDecoration(
                     borderRadius: pw.BorderRadius.circular(12),
-                    border: pw.Border.all(color: PdfColors.blueGrey300, width: 0.8),
+                    border:
+                        pw.Border.all(color: PdfColors.blueGrey300, width: 0.8),
                   ),
                   child: pw.Row(
                     mainAxisSize: pw.MainAxisSize.min,
@@ -615,9 +690,7 @@ class PdfService {
         .map(
           (category) => MapEntry(
             category,
-            skills
-                .where((skill) => skill.category == category)
-                .toList()
+            skills.where((skill) => skill.category == category).toList()
               ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder)),
           ),
         )
@@ -634,8 +707,9 @@ class PdfService {
           (entry) => pw.Padding(
             padding: const pw.EdgeInsets.only(bottom: 8),
             child: pw.Column(
-              crossAxisAlignment:
-                  isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+              crossAxisAlignment: isRtl
+                  ? pw.CrossAxisAlignment.end
+                  : pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
                   entry.key.name[0].toUpperCase() + entry.key.name.substring(1),
@@ -648,7 +722,8 @@ class PdfService {
                   children: entry.value
                       .map(
                         (skill) => pw.Container(
-                          padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                          padding: const pw.EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
                           decoration: pw.BoxDecoration(
                             color: PdfColors.grey200,
                             borderRadius: pw.BorderRadius.circular(14),
@@ -659,13 +734,14 @@ class PdfService {
                             children: [
                               pw.Text(
                                 skill.name,
-                                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                                style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold),
                               ),
                               if (skill.displayLevel.isNotEmpty) ...[
                                 pw.SizedBox(width: 6),
                                 pw.Container(
-                                  padding:
-                                      const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                  padding: const pw.EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 3),
                                   decoration: pw.BoxDecoration(
                                     color: PdfColors.blue100,
                                     borderRadius: pw.BorderRadius.circular(10),
@@ -692,7 +768,8 @@ class PdfService {
                                       height: 4,
                                       decoration: pw.BoxDecoration(
                                         color: PdfColors.blue,
-                                        borderRadius: pw.BorderRadius.circular(2),
+                                        borderRadius:
+                                            pw.BorderRadius.circular(2),
                                       ),
                                     ),
                                   ),
@@ -739,8 +816,10 @@ class PdfService {
                 if (project.role.isNotEmpty)
                   pw.Text(
                     project.role,
-                    style:
-                        pw.TextStyle(fontSize: 10, color: _currentPalette.subtleText),
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      color: _currentPalette.subtleText,
+                    ),
                     textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
                   ),
                 pw.Text(
@@ -769,16 +848,20 @@ class PdfService {
                     spacing: 6,
                     runSpacing: 4,
                     children: project.techTags
-                        .map((tag) => pw.Container(
-                              padding: const pw.EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: pw.BoxDecoration(
-                                color: _currentPalette.surfaceAlt,
-                                borderRadius: pw.BorderRadius.circular(4),
-                              ),
-                              child: pw.Text(tag,
-                                  style: const pw.TextStyle(fontSize: 10)),
-                            ))
+                        .map(
+                          (tag) => pw.Container(
+                            padding: const pw.EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: pw.BoxDecoration(
+                              color: _currentPalette.surfaceAlt,
+                              borderRadius: pw.BorderRadius.circular(4),
+                            ),
+                            child: pw.Text(
+                              tag,
+                              style: const pw.TextStyle(fontSize: 10),
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 if (project.thumbnailUrl.isNotEmpty &&
@@ -792,12 +875,17 @@ class PdfService {
                         height: 120,
                         width: double.infinity,
                         decoration: pw.BoxDecoration(
-                          border: pw.Border.all(color: _currentPalette.border, width: 0.5),
+                          border: pw.Border.all(
+                            color: _currentPalette.border,
+                            width: 0.5,
+                          ),
                         ),
                         child: pw.FittedBox(
                           fit: pw.BoxFit.cover,
                           alignment: pw.Alignment.center,
-                          child: pw.Image(projectImages[project.thumbnailUrl]!),
+                          child: pw.Image(
+                            projectImages[project.thumbnailUrl]!,
+                          ),
                         ),
                       ),
                     ),
@@ -833,208 +921,24 @@ class PdfService {
         padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: pw.BoxDecoration(
           borderRadius: pw.BorderRadius.circular(4),
-          border: pw.Border.all(color: PdfColors.blueGrey300, width: 0.5),
+          border: pw.Border.all(
+            color: PdfColors.blueGrey300,
+            width: 0.5,
+          ),
         ),
         child: pw.Text(
           label,
           textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
-          style: const pw.TextStyle(fontSize: 10, color: PdfColors.blue),
+          style: const pw.TextStyle(
+            fontSize: 10,
+            color: PdfColors.blue,
+          ),
         ),
       ),
     );
   }
 
-  List<pw.Widget> _buildMinimalTemplate(
-    ResumeProfile? profile,
-    List<WorkExperience> workExperiences,
-    List<Education> educations,
-    List<Certification> certifications,
-    List<Language> languages,
-    List<Interest> interests,
-    List<Skill> skills,
-    List<Project> projects,
-    bool isRtl,
-    List<ResumeSection> sectionOrder,
-    bool showGpa,
-    Map<String, pw.MemoryImage> projectImages,
-  ) {
-    return _buildSectionsByOrder(
-      sectionOrder,
-      ResumeTemplate.minimal,
-      profile,
-      workExperiences,
-      educations,
-      certifications,
-      languages,
-      interests,
-      skills,
-      projects,
-      isRtl,
-      showGpa,
-      projectImages,
-    );
-  }
-
-  List<pw.Widget> _buildModernTemplate(
-    ResumeProfile? profile,
-    List<WorkExperience> workExperiences,
-    List<Education> educations,
-    List<Certification> certifications,
-    List<Language> languages,
-    List<Interest> interests,
-    List<Skill> skills,
-    List<Project> projects,
-    bool isRtl,
-    List<ResumeSection> sectionOrder,
-    bool showGpa,
-    Map<String, pw.MemoryImage> projectImages,
-  ) {
-    return _buildSectionsByOrder(
-      sectionOrder,
-      ResumeTemplate.modern,
-      profile,
-      workExperiences,
-      educations,
-      certifications,
-      languages,
-      interests,
-      skills,
-      projects,
-      isRtl,
-      showGpa,
-      projectImages,
-    );
-  }
-
-  List<pw.Widget> _buildElegantTemplate(
-    ResumeProfile? profile,
-    List<WorkExperience> workExperiences,
-    List<Education> educations,
-    List<Certification> certifications,
-    List<Language> languages,
-    List<Interest> interests,
-    List<Skill> skills,
-    List<Project> projects,
-    bool isRtl,
-    List<ResumeSection> sectionOrder,
-    bool showGpa,
-    Map<String, pw.MemoryImage> projectImages,
-  ) {
-    return _buildSectionsByOrder(
-      sectionOrder,
-      ResumeTemplate.elegant,
-      profile,
-      workExperiences,
-      educations,
-      certifications,
-      languages,
-      interests,
-      skills,
-      projects,
-      isRtl,
-      showGpa,
-      projectImages,
-    );
-  }
-
-  List<pw.Widget> _buildAtsTemplate(
-    ResumeProfile? profile,
-    List<WorkExperience> workExperiences,
-    List<Education> educations,
-    List<Certification> certifications,
-    List<Language> languages,
-    List<Interest> interests,
-    List<Skill> skills,
-    List<Project> projects,
-    bool isRtl,
-    List<ResumeSection> sectionOrder,
-    bool showGpa,
-    Map<String, pw.MemoryImage> projectImages,
-  ) {
-    return _buildSectionsByOrder(
-      sectionOrder,
-      ResumeTemplate.ats,
-      profile,
-      workExperiences,
-      educations,
-      certifications,
-      languages,
-      interests,
-      skills,
-      projects,
-      isRtl,
-      showGpa,
-      projectImages,
-    );
-  }
-
-  List<pw.Widget> _buildSectionsByOrder(
-    List<ResumeSection> sectionOrder,
-    ResumeTemplate template,
-    ResumeProfile? profile,
-    List<WorkExperience> workExperiences,
-    List<Education> educations,
-    List<Certification> certifications,
-    List<Language> languages,
-    List<Interest> interests,
-    List<Skill> skills,
-    List<Project> projects,
-    bool isRtl,
-    bool showGpa,
-    Map<String, pw.MemoryImage> projectImages,
-  ) {
-    final List<pw.Widget> widgets = [];
-
-    for (var i = 0; i < sectionOrder.length; i++) {
-      final section = sectionOrder[i];
-      final sectionWidget = switch (section) {
-        ResumeSection.profile => switch (template) {
-            ResumeTemplate.modern when profile != null =>
-              _buildModernHeader(profile, isRtl),
-            ResumeTemplate.elegant when profile != null =>
-              _buildElegantHeader(profile, isRtl),
-            ResumeTemplate.ats when profile != null =>
-              _buildAtsHeader(profile, isRtl),
-            _ => _buildProfileSection(profile, isRtl),
-          },
-        ResumeSection.workExperience =>
-            _buildExperienceSection(workExperiences, isRtl),
-        ResumeSection.education =>
-            _buildEducationSection(educations, isRtl, showGpa),
-        ResumeSection.certifications =>
-            _buildCertificationSection(certifications, isRtl),
-        ResumeSection.languages => _buildLanguageSection(languages, isRtl),
-        ResumeSection.interests => _buildInterestSection(interests, isRtl),
-        ResumeSection.skills => _buildSkillSection(skills, isRtl),
-        ResumeSection.projects =>
-            _buildProjectSection(projects, isRtl, projectImages),
-      };
-
-      widgets.add(sectionWidget);
-
-      if (i != sectionOrder.length - 1) {
-        if (template == ResumeTemplate.modern) {
-          widgets.add(pw.Divider());
-        } else if (template == ResumeTemplate.elegant) {
-          widgets.add(
-            pw.Divider(
-              color: PdfColors.blueGrey300,
-              thickness: 0.7,
-            ),
-          );
-        } else if (template == ResumeTemplate.ats) {
-          widgets.add(
-            pw.Divider(
-              color: _currentPalette.border,
-              thickness: 0.5,
-            ),
-          );
-        }
-      }
-    }
-
-    return widgets;
-  }
+  // ------------------ هِدرهای تم‌ها ------------------
 
   pw.Widget _buildAtsHeader(ResumeProfile profile, bool isRtl) {
     final alignment = isRtl ? pw.TextAlign.right : pw.TextAlign.left;
@@ -1055,8 +959,9 @@ class PdfService {
           ],
           pw.Expanded(
             child: pw.Column(
-              crossAxisAlignment:
-                  isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+              crossAxisAlignment: isRtl
+                  ? pw.CrossAxisAlignment.end
+                  : pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
                   profile.fullName,
@@ -1112,8 +1017,9 @@ class PdfService {
           ],
           pw.Expanded(
             child: pw.Column(
-              crossAxisAlignment:
-                  isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+              crossAxisAlignment: isRtl
+                  ? pw.CrossAxisAlignment.end
+                  : pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
                   profile.fullName,
@@ -1184,8 +1090,9 @@ class PdfService {
           ],
           pw.Expanded(
             child: pw.Column(
-              crossAxisAlignment:
-                  isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+              crossAxisAlignment: isRtl
+                  ? pw.CrossAxisAlignment.end
+                  : pw.CrossAxisAlignment.start,
               children: [
                 pw.Text(
                   profile.fullName,
