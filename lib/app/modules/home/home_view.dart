@@ -7,8 +7,11 @@ import '../../services/premium_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/theme_controller.dart';
 import '../../data/repositories/education_repository.dart';
+import '../../data/repositories/interest_repository.dart';
+import '../../data/repositories/language_repository.dart';
 import '../../data/repositories/project_repository.dart';
 import '../../data/repositories/resume_profile_repository.dart';
+import '../../data/repositories/certification_repository.dart';
 import '../../data/repositories/skill_repository.dart';
 import '../../data/repositories/work_experience_repository.dart';
 
@@ -23,6 +26,9 @@ class _HomeViewState extends State<HomeView> {
   final ResumeProfileRepository _profileRepository = ResumeProfileRepository();
   final WorkExperienceRepository _workRepository = WorkExperienceRepository();
   final EducationRepository _educationRepository = EducationRepository();
+  final CertificationRepository _certificationRepository = CertificationRepository();
+  final LanguageRepository _languageRepository = LanguageRepository();
+  final InterestRepository _interestRepository = InterestRepository();
   final SkillRepository _skillRepository = SkillRepository();
   final ProjectRepository _projectRepository = ProjectRepository();
 
@@ -30,6 +36,9 @@ class _HomeViewState extends State<HomeView> {
     resumeProfileRepository: _profileRepository,
     workExperienceRepository: _workRepository,
     educationRepository: _educationRepository,
+    certificationRepository: _certificationRepository,
+    languageRepository: _languageRepository,
+    interestRepository: _interestRepository,
     skillRepository: _skillRepository,
     projectRepository: _projectRepository,
   );
@@ -45,6 +54,9 @@ class _HomeViewState extends State<HomeView> {
     'profiles': 0,
     'work': 0,
     'education': 0,
+    'certifications': 0,
+    'languages': 0,
+    'interests': 0,
     'skills': 0,
     'projects': 0,
   };
@@ -68,6 +80,9 @@ class _HomeViewState extends State<HomeView> {
     final profiles = await _profileRepository.getAll();
     final work = await _workRepository.getAll();
     final education = await _educationRepository.getAll();
+    final certifications = await _certificationRepository.getAll();
+    final languages = await _languageRepository.getAll();
+    final interests = await _interestRepository.getAll();
     final skills = await _skillRepository.getAll();
     final projects = await _projectRepository.getAll();
 
@@ -78,6 +93,9 @@ class _HomeViewState extends State<HomeView> {
         'profiles': profiles.length,
         'work': work.length,
         'education': education.length,
+        'certifications': certifications.length,
+        'languages': languages.length,
+        'interests': interests.length,
         'skills': skills.length,
         'projects': projects.length,
       };
@@ -475,6 +493,9 @@ class _StatsGrid extends StatelessWidget {
       (_StatCardData(labelKey: 'profile', count: counts['profiles'] ?? 0, icon: Icons.person_outline)),
       (_StatCardData(labelKey: 'work_experience', count: counts['work'] ?? 0, icon: Icons.badge_outlined)),
       (_StatCardData(labelKey: 'education', count: counts['education'] ?? 0, icon: Icons.school_outlined)),
+      (_StatCardData(labelKey: 'certifications', count: counts['certifications'] ?? 0, icon: Icons.workspace_premium_outlined)),
+      (_StatCardData(labelKey: 'languages', count: counts['languages'] ?? 0, icon: Icons.translate)),
+      (_StatCardData(labelKey: 'interests', count: counts['interests'] ?? 0, icon: Icons.favorite_border)),
       (_StatCardData(labelKey: 'skills', count: counts['skills'] ?? 0, icon: Icons.star_border)),
       (_StatCardData(labelKey: 'projects', count: counts['projects'] ?? 0, icon: Icons.widgets_outlined)),
     ];
@@ -578,6 +599,9 @@ class _NavigationGrid extends StatelessWidget {
       _NavigationTile(title: 'profile', route: Routes.profile, icon: Icons.person_outline),
       _NavigationTile(title: 'work_experience', route: Routes.work, icon: Icons.badge_outlined),
       _NavigationTile(title: 'education', route: Routes.education, icon: Icons.school_outlined),
+      _NavigationTile(title: 'certifications', route: Routes.certifications, icon: Icons.workspace_premium_outlined),
+      _NavigationTile(title: 'languages', route: Routes.languages, icon: Icons.translate),
+      _NavigationTile(title: 'interests', route: Routes.interests, icon: Icons.favorite_border),
       _NavigationTile(title: 'skills', route: Routes.skills, icon: Icons.star_border),
       _NavigationTile(title: 'projects', route: Routes.projects, icon: Icons.widgets_outlined),
       _NavigationTile(title: 'settings', route: Routes.settings, icon: Icons.settings_outlined),

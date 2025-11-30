@@ -6,13 +6,19 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../data/models/education.dart';
+import '../data/models/interest.dart';
+import '../data/models/language.dart';
 import '../data/models/project.dart';
 import '../data/models/resume_profile.dart';
+import '../data/models/certification.dart';
 import '../data/models/skill.dart';
 import '../data/models/work_experience.dart';
 import '../data/repositories/education_repository.dart';
+import '../data/repositories/interest_repository.dart';
+import '../data/repositories/language_repository.dart';
 import '../data/repositories/project_repository.dart';
 import '../data/repositories/resume_profile_repository.dart';
+import '../data/repositories/certification_repository.dart';
 import '../data/repositories/skill_repository.dart';
 import '../data/repositories/work_experience_repository.dart';
 import '../utils/resume_sections.dart';
@@ -25,6 +31,9 @@ class PdfService {
     required this.resumeProfileRepository,
     required this.workExperienceRepository,
     required this.educationRepository,
+    required this.certificationRepository,
+    required this.languageRepository,
+    required this.interestRepository,
     required this.skillRepository,
     required this.projectRepository,
     SettingsService? settingsService,
@@ -33,6 +42,9 @@ class PdfService {
   final ResumeProfileRepository resumeProfileRepository;
   final WorkExperienceRepository workExperienceRepository;
   final EducationRepository educationRepository;
+  final CertificationRepository certificationRepository;
+  final LanguageRepository languageRepository;
+  final InterestRepository interestRepository;
   final SkillRepository skillRepository;
   final ProjectRepository projectRepository;
   final SettingsService settingsService;
@@ -45,6 +57,9 @@ class PdfService {
     final List<WorkExperience> workExperiences =
         await workExperienceRepository.getAll();
     final List<Education> educations = await educationRepository.getAll();
+    final List<Certification> certifications = await certificationRepository.getAll();
+    final List<Language> languages = await languageRepository.getAll();
+    final List<Interest> interests = await interestRepository.getAll();
     final List<Skill> skills = await skillRepository.getAll();
     final List<Project> projects = await projectRepository.getAll();
     final List<ResumeSection> sectionOrder =
@@ -71,6 +86,9 @@ class PdfService {
               profile,
               workExperiences,
               educations,
+              certifications,
+              languages,
+              interests,
               skills,
               projects,
               isRtl,
@@ -80,6 +98,9 @@ class PdfService {
               profile,
               workExperiences,
               educations,
+              certifications,
+              languages,
+              interests,
               skills,
               projects,
               isRtl,
@@ -89,6 +110,9 @@ class PdfService {
               profile,
               workExperiences,
               educations,
+              certifications,
+              languages,
+              interests,
               skills,
               projects,
               isRtl,
@@ -370,6 +394,114 @@ class PdfService {
     );
   }
 
+  pw.Widget _buildCertificationSection(
+      List<Certification> certifications, bool isRtl) {
+    return pw.Column(
+      crossAxisAlignment:
+          isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Certifications', isRtl),
+        ...certifications.map(
+          (certification) => pw.Padding(
+            padding: const pw.EdgeInsets.only(bottom: 8),
+            child: pw.Column(
+              crossAxisAlignment: isRtl
+                  ? pw.CrossAxisAlignment.end
+                  : pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  certification.name,
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                ),
+                pw.Text(
+                  '${certification.issuer} • ${certification.issueDate}',
+                  textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                ),
+                if (certification.credentialUrl.isNotEmpty)
+                  pw.UrlLink(
+                    destination: certification.credentialUrl,
+                    child: pw.Padding(
+                      padding: const pw.EdgeInsets.only(top: 4),
+                      child: pw.Text(
+                        certification.credentialUrl,
+                        style: const pw.TextStyle(
+                          color: PdfColors.blue,
+                          decoration: pw.TextDecoration.underline,
+                        ),
+                        textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (certifications.isEmpty) pw.Text('No certifications added yet'),
+        pw.SizedBox(height: 16),
+      ],
+    );
+  }
+
+  pw.Widget _buildLanguageSection(List<Language> languages, bool isRtl) {
+    return pw.Column(
+      crossAxisAlignment:
+          isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Languages', isRtl),
+        pw.Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: languages
+              .map(
+                (language) => pw.Container(
+                  padding:
+                      const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: pw.BoxDecoration(
+                    borderRadius: pw.BorderRadius.circular(12),
+                    border: pw.Border.all(color: PdfColors.blueGrey300, width: 0.8),
+                  ),
+                  child: pw.Row(
+                    mainAxisSize: pw.MainAxisSize.min,
+                    children: [
+                      pw.Text(
+                        language.name,
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                      ),
+                      pw.SizedBox(width: 6),
+                      pw.Text('(${language.level})'),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+        if (languages.isEmpty) pw.Text('No languages added yet'),
+        pw.SizedBox(height: 16),
+      ],
+    );
+  }
+
+  pw.Widget _buildInterestSection(List<Interest> interests, bool isRtl) {
+    return pw.Column(
+      crossAxisAlignment:
+          isRtl ? pw.CrossAxisAlignment.end : pw.CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('Interests', isRtl),
+        ...interests.map(
+          (interest) => pw.Bullet(
+            text: interest.details.isNotEmpty
+                ? '${interest.title}: ${interest.details}'
+                : interest.title,
+            textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+          ),
+        ),
+        if (interests.isEmpty) pw.Text('No interests added yet'),
+        pw.SizedBox(height: 16),
+      ],
+    );
+  }
+
   pw.Widget _buildSkillSection(List<Skill> skills, bool isRtl) {
     final categorySkills = SkillCategory.values
         .map(
@@ -582,6 +714,9 @@ class PdfService {
     ResumeProfile? profile,
     List<WorkExperience> workExperiences,
     List<Education> educations,
+    List<Certification> certifications,
+    List<Language> languages,
+    List<Interest> interests,
     List<Skill> skills,
     List<Project> projects,
     bool isRtl,
@@ -593,6 +728,9 @@ class PdfService {
       profile,
       workExperiences,
       educations,
+      certifications,
+      languages,
+      interests,
       skills,
       projects,
       isRtl,
@@ -603,6 +741,9 @@ class PdfService {
     ResumeProfile? profile,
     List<WorkExperience> workExperiences,
     List<Education> educations,
+    List<Certification> certifications,
+    List<Language> languages,
+    List<Interest> interests,
     List<Skill> skills,
     List<Project> projects,
     bool isRtl,
@@ -614,6 +755,9 @@ class PdfService {
       profile,
       workExperiences,
       educations,
+      certifications,
+      languages,
+      interests,
       skills,
       projects,
       isRtl,
@@ -624,6 +768,9 @@ class PdfService {
     ResumeProfile? profile,
     List<WorkExperience> workExperiences,
     List<Education> educations,
+    List<Certification> certifications,
+    List<Language> languages,
+    List<Interest> interests,
     List<Skill> skills,
     List<Project> projects,
     bool isRtl,
@@ -635,6 +782,9 @@ class PdfService {
       profile,
       workExperiences,
       educations,
+      certifications,
+      languages,
+      interests,
       skills,
       projects,
       isRtl,
@@ -647,6 +797,9 @@ class PdfService {
     ResumeProfile? profile,
     List<WorkExperience> workExperiences,
     List<Education> educations,
+    List<Certification> certifications,
+    List<Language> languages,
+    List<Interest> interests,
     List<Skill> skills,
     List<Project> projects,
     bool isRtl,
@@ -666,6 +819,10 @@ class PdfService {
         ResumeSection.workExperience =>
             _buildExperienceSection(workExperiences, isRtl),
         ResumeSection.education => _buildEducationSection(educations, isRtl),
+        ResumeSection.certifications =>
+            _buildCertificationSection(certifications, isRtl),
+        ResumeSection.languages => _buildLanguageSection(languages, isRtl),
+        ResumeSection.interests => _buildInterestSection(interests, isRtl),
         ResumeSection.skills => _buildSkillSection(skills, isRtl),
         ResumeSection.projects => _buildProjectSection(projects, isRtl),
       };
