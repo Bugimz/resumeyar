@@ -86,164 +86,207 @@ class ProfileView extends GetView<ProfileController> {
       appBar: AppBar(
         title: Text('profiles_title'.tr),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Form(
-              key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: fullNameController,
-                    decoration: InputDecoration(labelText: 'full_name_label'.tr),
-                    validator: FormValidators.requiredField,
-                    onChanged: (_) => _updateFormValidity(),
-                  ),
-                  TextFormField(
-                    controller: emailController,
-                    decoration: InputDecoration(labelText: 'email_label'.tr),
-                    validator: FormValidators.email,
-                    onChanged: (_) => _updateFormValidity(),
-                  ),
-                  TextFormField(
-                    controller: phoneController,
-                    decoration: InputDecoration(labelText: 'phone_label'.tr),
-                    validator: FormValidators.requiredField,
-                    onChanged: (_) => _updateFormValidity(),
-                  ),
-                  TextFormField(
-                    controller: summaryController,
-                    decoration: InputDecoration(labelText: 'summary_label'.tr),
-                    validator: FormValidators.requiredField,
-                    onChanged: (_) => _updateFormValidity(),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: _pickImage,
-                        icon: const Icon(Icons.image),
-                        label: Text('select_image'.tr),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Obx(() {
-                          final path = imagePath.value;
-                          if (path == null || path.isEmpty) {
-                            return Text('no_image_selected'.tr);
-                          }
-                          return Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey.shade300),
-                                ),
-                                clipBehavior: Clip.antiAlias,
-                                child: Image.file(
-                                  File(path),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  path,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          );
-                        }),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Obx(() => ElevatedButton(
-                            onPressed: isFormValid.value ? _submit : null,
-                            child: Text(
-                              editingProfile.value == null
-                                  ? 'save'.tr
-                                  : 'update'.tr,
-                            ),
-                          )),
-                      const SizedBox(width: 8),
-                      TextButton(
-                        onPressed: _resetForm,
-                        child: Text('clear'.tr),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'profiles_title'.tr,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Obx(() {
-              final profiles = controller.profiles;
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 720;
+          final double fieldWidth = isWide
+              ? (constraints.maxWidth / 2) - 28
+              : constraints.maxWidth;
 
-              if (controller.isLoading.isTrue) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (profiles.isEmpty) {
-                return Text('no_profiles'.tr);
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: profiles.length,
-                itemBuilder: (context, index) {
-                  final profile = profiles[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(profile.fullName),
-                      subtitle: Text('${profile.email} • ${profile.phone}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: Wrap(
+                        spacing: 16,
+                        runSpacing: 12,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {
-                            editingProfile.value = profile;
-                            fullNameController.text = profile.fullName;
-                            emailController.text = profile.email;
-                            phoneController.text = profile.phone;
-                            summaryController.text = profile.summary;
-                            imagePath.value = profile.imagePath;
-                            _updateFormValidity();
-                          },
+                          SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
+                              controller: fullNameController,
+                              decoration:
+                                  InputDecoration(labelText: 'full_name_label'.tr),
+                              validator: FormValidators.requiredField,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () async {
-                              if (profile.id != null) {
-                                await controller.deleteProfile(profile.id!);
-                              }
-                            },
+                          SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
+                              controller: emailController,
+                              decoration:
+                                  InputDecoration(labelText: 'email_label'.tr),
+                              validator: FormValidators.email,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
+                              controller: phoneController,
+                              decoration:
+                                  InputDecoration(labelText: 'phone_label'.tr),
+                              validator: FormValidators.requiredField,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
+                              controller: summaryController,
+                              decoration:
+                                  InputDecoration(labelText: 'summary_label'.tr),
+                              validator: FormValidators.requiredField,
+                              maxLines: 3,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: Row(
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: _pickImage,
+                                  icon: const Icon(Icons.image),
+                                  label: Text('select_image'.tr),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Obx(() {
+                                    final path = imagePath.value;
+                                    if (path == null || path.isEmpty) {
+                                      return Text('no_image_selected'.tr);
+                                    }
+                                    return Row(
+                                      children: [
+                                        Container(
+                                          width: 48,
+                                          height: 48,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(8),
+                                            border: Border.all(
+                                                color: Colors.grey.shade300),
+                                          ),
+                                          clipBehavior: Clip.antiAlias,
+                                          child: Image.file(
+                                            File(path),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            path,
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              children: [
+                                Obx(() => ElevatedButton(
+                                      onPressed:
+                                          isFormValid.value ? _submit : null,
+                                      child: Text(
+                                        editingProfile.value == null
+                                            ? 'save'.tr
+                                            : 'update'.tr,
+                                      ),
+                                    )),
+                                TextButton(
+                                  onPressed: _resetForm,
+                                  child: Text('clear'.tr),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
-              );
-            }),
-          ],
-        ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'profiles_title'.tr,
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    Obx(() {
+                      final profiles = controller.profiles;
+
+                      if (controller.isLoading.isTrue) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+
+                      if (profiles.isEmpty) {
+                        return Text('no_profiles'.tr);
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: profiles.length,
+                        itemBuilder: (context, index) {
+                          final profile = profiles[index];
+                          return Card(
+                            child: ListTile(
+                              title: Text(profile.fullName),
+                              subtitle:
+                                  Text('${profile.email} • ${profile.phone}'),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      editingProfile.value = profile;
+                                      fullNameController.text = profile.fullName;
+                                      emailController.text = profile.email;
+                                      phoneController.text = profile.phone;
+                                      summaryController.text = profile.summary;
+                                      imagePath.value = profile.imagePath;
+                                      _updateFormValidity();
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete),
+                                    onPressed: () async {
+                                      if (profile.id != null) {
+                                        await controller.deleteProfile(
+                                            profile.id!);
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    }),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
