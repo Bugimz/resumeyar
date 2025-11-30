@@ -25,7 +25,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 7,
+      version: 8,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -110,6 +110,41 @@ class DatabaseProvider {
             liveLink TEXT NOT NULL DEFAULT '',
             thumbnailUrl TEXT NOT NULL DEFAULT '',
             isFeatured INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE certifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profileId INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            issuer TEXT NOT NULL,
+            issueDate TEXT NOT NULL,
+            credentialUrl TEXT NOT NULL DEFAULT '',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE languages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profileId INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            level TEXT NOT NULL,
+            sortOrder INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE interests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profileId INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            details TEXT NOT NULL DEFAULT '',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -212,6 +247,43 @@ class DatabaseProvider {
               "ALTER TABLE projects ADD COLUMN thumbnailUrl TEXT NOT NULL DEFAULT ''");
           await db
               .execute("ALTER TABLE projects ADD COLUMN isFeatured INTEGER NOT NULL DEFAULT 0");
+        }
+
+        if (oldVersion < 8) {
+          await db.execute('''
+            CREATE TABLE certifications (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              profileId INTEGER NOT NULL,
+              name TEXT NOT NULL,
+              issuer TEXT NOT NULL,
+              issueDate TEXT NOT NULL,
+              credentialUrl TEXT NOT NULL DEFAULT '',
+              sortOrder INTEGER NOT NULL DEFAULT 0,
+              FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE languages (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              profileId INTEGER NOT NULL,
+              name TEXT NOT NULL,
+              level TEXT NOT NULL,
+              sortOrder INTEGER NOT NULL DEFAULT 0,
+              FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE interests (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              profileId INTEGER NOT NULL,
+              title TEXT NOT NULL,
+              details TEXT NOT NULL DEFAULT '',
+              sortOrder INTEGER NOT NULL DEFAULT 0,
+              FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+            )
+          ''');
         }
       },
     );

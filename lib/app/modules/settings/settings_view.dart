@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/repositories/education_repository.dart';
+import '../../data/repositories/interest_repository.dart';
+import '../../data/repositories/language_repository.dart';
 import '../../data/repositories/project_repository.dart';
 import '../../data/repositories/resume_profile_repository.dart';
+import '../../data/repositories/certification_repository.dart';
 import '../../data/repositories/skill_repository.dart';
 import '../../data/repositories/work_experience_repository.dart';
 import '../../services/backup_service.dart';
@@ -21,6 +24,9 @@ class SettingsView extends StatefulWidget {
     resumeProfileRepository: ResumeProfileRepository(),
     workExperienceRepository: WorkExperienceRepository(),
     educationRepository: EducationRepository(),
+    certificationRepository: CertificationRepository(),
+    languageRepository: LanguageRepository(),
+    interestRepository: InterestRepository(),
     skillRepository: SkillRepository(),
     projectRepository: ProjectRepository(),
   );
