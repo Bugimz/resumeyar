@@ -13,13 +13,18 @@ class BillingService {
 
   bool _connected = false;
 
+  final ValueNotifier<bool> isConnecting = ValueNotifier<bool>(false);
+  final ValueNotifier<bool> isConnectedNotifier = ValueNotifier<bool>(false);
+
   bool get isConnected => _connected;
 
   Future<void> init() async {
+    isConnecting.value = true;
     await _connect();
     if (_connected) {
       await _restorePurchases();
     }
+    isConnecting.value = false;
   }
 
   Future<void> buyPremium() async {
@@ -51,21 +56,29 @@ class BillingService {
 
   Future<void> _connect() async {
     _connected = false;
+    isConnecting.value = true;
+    isConnectedNotifier.value = false;
     try {
       await FlutterPoolakey.connect(
         rsaPublicKey,
         onSucceed: () {
           _connected = true;
+          isConnectedNotifier.value = true;
+          isConnecting.value = false;
           debugPrint('Poolakey connected successfully.');
         },
         onFailed: () {
           _connected = false;
+          isConnectedNotifier.value = false;
+          isConnecting.value = false;
           debugPrint('Poolakey connection failed (onFailed callback).');
         },
         onDisconnected: _handleDisconnect,
       );
     } catch (error, stackTrace) {
       _connected = false;
+      isConnectedNotifier.value = false;
+      isConnecting.value = false;
       debugPrint('Poolakey connection threw an exception: $error');
       debugPrint('$stackTrace');
     }
@@ -124,6 +137,7 @@ class BillingService {
 
   void _handleDisconnect() {
     _connected = false;
+    isConnectedNotifier.value = false;
     debugPrint('Poolakey disconnected.');
   }
 }

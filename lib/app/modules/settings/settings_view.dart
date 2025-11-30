@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 
 import '../../data/repositories/education_repository.dart';
@@ -14,6 +15,7 @@ import '../../data/repositories/certification_repository.dart';
 import '../../data/repositories/skill_repository.dart';
 import '../../data/repositories/work_experience_repository.dart';
 import '../../services/backup_service.dart';
+import '../../services/billing_service.dart';
 import '../../services/premium_service.dart';
 import '../../services/settings_service.dart';
 import '../../utils/resume_sections.dart';
@@ -46,6 +48,12 @@ class _SettingsViewState extends State<SettingsView> {
   PdfPageSize _pageSize = PdfPageSize.a4;
   PdfThemeMode _pdfTheme = PdfThemeMode.light;
   bool _isLoading = true;
+  bool _isBackingUp = false;
+  bool _isRestoring = false;
+  String? _backupError;
+  String? _lastBackupLocation;
+  DateTime? _lastBackupTime;
+  BackupDestination _backupDestination = BackupDestination.local;
 
   bool get _isPremium => _premiumService.isPremium.value;
 
@@ -79,6 +87,21 @@ class _SettingsViewState extends State<SettingsView> {
 
   Future<void> _saveBackup() async {
     if (!await _requirePremium()) return;
+    final confirmed = await _confirmAction(
+      title: 'confirm_backup'.tr,
+      message: 'confirm_backup_message'.tr,
+    );
+    if (!confirmed) return;
+
+    if (_backupDestination == BackupDestination.cloud) {
+      Get.snackbar('info'.tr, 'cloud_backup_not_available'.tr);
+      return;
+    }
+
+    setState(() {
+      _isBackingUp = true;
+      _backupError = null;
+    });
     try {
       final backupPath = await FilePicker.platform.saveFile(
         dialogTitle: 'select_backup_path'.tr,
@@ -95,14 +118,43 @@ class _SettingsViewState extends State<SettingsView> {
       final file = File(backupPath);
       await file.writeAsString(backupContent);
 
+      await _settingsService.saveLastBackup(
+        path: backupPath,
+        destination: _backupDestination,
+      );
+      setState(() {
+        _lastBackupLocation = backupPath;
+        _lastBackupTime = DateTime.now();
+      });
+
       Get.snackbar('success'.tr, 'backup_saved'.trParams({'path': backupPath}));
     } catch (e) {
+      setState(() => _backupError = '$e');
       Get.snackbar('error'.tr, 'backup_failed'.trParams({'error': '$e'}));
+    } finally {
+      if (mounted) {
+        setState(() => _isBackingUp = false);
+      }
     }
   }
 
   Future<void> _restoreBackup() async {
     if (!await _requirePremium()) return;
+    final confirmed = await _confirmAction(
+      title: 'confirm_restore'.tr,
+      message: 'confirm_restore_message'.tr,
+    );
+    if (!confirmed) return;
+
+    if (_backupDestination == BackupDestination.cloud) {
+      Get.snackbar('info'.tr, 'cloud_restore_not_available'.tr);
+      return;
+    }
+
+    setState(() {
+      _isRestoring = true;
+      _backupError = null;
+    });
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -118,12 +170,47 @@ class _SettingsViewState extends State<SettingsView> {
       final content = await File(filePath).readAsString();
       await widget._backupService.importFromJson(content);
 
+      await _settingsService.saveLastBackup(
+        path: filePath,
+        destination: _backupDestination,
+      );
+      setState(() {
+        _lastBackupLocation = filePath;
+        _lastBackupTime = DateTime.now();
+      });
+
       Get.snackbar('success'.tr, 'backup_restored'.tr);
     } on FormatException catch (e) {
       Get.snackbar('error'.tr, 'invalid_backup_format'.trParams({'error': '$e'}));
     } catch (e) {
+      setState(() => _backupError = '$e');
       Get.snackbar('error'.tr, 'backup_restore_failed'.trParams({'error': '$e'}));
+    } finally {
+      if (mounted) {
+        setState(() => _isRestoring = false);
+      }
     }
+  }
+
+  Future<bool> _confirmAction({required String title, required String message}) {
+    return showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(message),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('cancel'.tr),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('confirm'.tr),
+              ),
+            ],
+          ),
+        )
+            .then((value) => value ?? false);
   }
 
   @override
@@ -138,6 +225,7 @@ class _SettingsViewState extends State<SettingsView> {
     final showGpa = await _settingsService.loadGpaVisibility();
     final pageFormat = await _settingsService.loadPageFormat();
     final pdfTheme = await _settingsService.loadPdfTheme();
+    final lastBackup = await _settingsService.loadLastBackup();
     if (!mounted) return;
     setState(() {
       _sectionOrder = order;
@@ -147,8 +235,27 @@ class _SettingsViewState extends State<SettingsView> {
       _pageSize = pageFormat == PdfPageFormat.letter
           ? PdfPageSize.letter
           : PdfPageSize.a4;
+      _backupDestination = lastBackup.destination;
+      _lastBackupLocation = lastBackup.path;
+      _lastBackupTime = lastBackup.time;
       _isLoading = false;
     });
+  }
+
+  String _buildLastBackupLabel(BuildContext context) {
+    if (_lastBackupTime == null || _lastBackupLocation == null) {
+      return 'no_backup_yet'.tr;
+    }
+
+    final dateFormat = DateFormat.yMMMd(Localizations.localeOf(context).languageCode);
+    final timeFormat = DateFormat.Hm(Localizations.localeOf(context).languageCode);
+    final formattedTime =
+        '${dateFormat.format(_lastBackupTime!)} • ${timeFormat.format(_lastBackupTime!)}';
+    final locationLabel = _backupDestination == BackupDestination.cloud
+        ? 'cloud_storage'.tr
+        : _lastBackupLocation!;
+
+    return '${'last_backup'.tr}: $formattedTime (${locationLabel})';
   }
 
   Future<void> _onReorder(int oldIndex, int newIndex) async {
@@ -215,6 +322,7 @@ class _SettingsViewState extends State<SettingsView> {
                     isPremium: isPremium,
                     onUpgrade: _premiumService.buyPremium,
                     isWide: isWide,
+                    billingService: _premiumService.billingService,
                   ),
                   const SizedBox(height: 16),
                   Card(
@@ -236,6 +344,57 @@ class _SettingsViewState extends State<SettingsView> {
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                           const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 10,
+                            runSpacing: 8,
+                            children: BackupDestination.values
+                                .map(
+                                  (dest) => ChoiceChip(
+                                    label: Text(dest == BackupDestination.local
+                                        ? 'local_storage'.tr
+                                        : 'cloud_storage'.tr),
+                                    selected: _backupDestination == dest,
+                                    onSelected: (selected) {
+                                      if (!selected) return;
+                                      setState(() => _backupDestination = dest);
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.history, size: 18),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  _buildLastBackupLabel(context),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (_backupError != null) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                const Icon(Icons.error_outline, color: Colors.red),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    _backupError!,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          const SizedBox(height: 12),
                           LayoutBuilder(builder: (context, innerConstraints) {
                             final buttonWidth = innerConstraints.maxWidth > 500
                                 ? (innerConstraints.maxWidth - 12) / 2
@@ -247,9 +406,20 @@ class _SettingsViewState extends State<SettingsView> {
                                 SizedBox(
                                   width: buttonWidth,
                                   child: FilledButton.icon(
-                                    onPressed: _saveBackup,
-                                    icon: const Icon(Icons.save_alt),
-                                    label: Text('save_backup'.tr),
+                                    onPressed: _isBackingUp ? null : _saveBackup,
+                                    icon: _isBackingUp
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(Icons.save_alt),
+                                    label: Text(_isBackingUp
+                                        ? 'backing_up'.tr
+                                        : 'save_backup'.tr),
                                     style: FilledButton.styleFrom(
                                       minimumSize: const Size.fromHeight(52),
                                     ),
@@ -258,9 +428,21 @@ class _SettingsViewState extends State<SettingsView> {
                                 SizedBox(
                                   width: buttonWidth,
                                   child: FilledButton.icon(
-                                    onPressed: _restoreBackup,
-                                    icon: const Icon(Icons.restore),
-                                    label: Text('restore_backup'.tr),
+                                    onPressed:
+                                        _isRestoring ? null : _restoreBackup,
+                                    icon: _isRestoring
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(Icons.restore),
+                                    label: Text(_isRestoring
+                                        ? 'restoring'.tr
+                                        : 'restore_backup'.tr),
                                     style: FilledButton.styleFrom(
                                       minimumSize: const Size.fromHeight(52),
                                     ),
@@ -427,12 +609,17 @@ class _SettingsViewState extends State<SettingsView> {
 }
 
 class _SettingsHero extends StatelessWidget {
-  const _SettingsHero(
-      {required this.isPremium, required this.onUpgrade, required this.isWide});
+  const _SettingsHero({
+    required this.isPremium,
+    required this.onUpgrade,
+    required this.isWide,
+    required this.billingService,
+  });
 
   final bool isPremium;
   final Future<void> Function() onUpgrade;
   final bool isWide;
+  final BillingService billingService;
 
   @override
   Widget build(BuildContext context) {
@@ -460,6 +647,77 @@ class _SettingsHero extends StatelessWidget {
           isPremium ? 'hero_premium_body'.tr : 'premium_backup_message'.tr,
           style:
               theme.textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.9)),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: [
+            Chip(
+              label: Text('extra_templates'.tr),
+              backgroundColor: Colors.white.withOpacity(0.18),
+              side: BorderSide(color: Colors.white.withOpacity(0.2)),
+              labelStyle: theme.textTheme.bodySmall
+                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+            Chip(
+              label: Text('unlimited_sections'.tr),
+              backgroundColor: Colors.white.withOpacity(0.18),
+              side: BorderSide(color: Colors.white.withOpacity(0.2)),
+              labelStyle: theme.textTheme.bodySmall
+                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        ValueListenableBuilder<bool>(
+          valueListenable: billingService.isConnecting,
+          builder: (context, connecting, _) {
+            return ValueListenableBuilder<bool>(
+              valueListenable: billingService.isConnectedNotifier,
+              builder: (context, connected, __) {
+                final color = connecting
+                    ? Colors.white
+                    : connected
+                        ? Colors.lightGreenAccent
+                        : Colors.orangeAccent;
+                final icon = connecting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : Icon(
+                        connected ? Icons.wifi : Icons.wifi_off,
+                        color: color,
+                        size: 18,
+                      );
+
+                final statusText = connecting
+                    ? 'billing_connecting'.tr
+                    : connected
+                        ? 'billing_connected'.tr
+                        : 'billing_disconnected'.tr;
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    icon,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        statusText,
+                        style: theme.textTheme.labelMedium
+                            ?.copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
         const SizedBox(height: 12),
         if (!isPremium)

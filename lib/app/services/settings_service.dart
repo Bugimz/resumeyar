@@ -7,12 +7,29 @@ enum PdfPageSize { a4, letter }
 
 enum PdfThemeMode { light, dark }
 
+enum BackupDestination { local, cloud }
+
+class LastBackupInfo {
+  const LastBackupInfo({
+    required this.destination,
+    required this.path,
+    required this.time,
+  });
+
+  final BackupDestination destination;
+  final String? path;
+  final DateTime? time;
+}
+
 class SettingsService {
   static const String _sectionOrderKey = 'resume_section_order';
   static const String _sectionVisibilityKey = 'resume_section_visibility';
   static const String _pageFormatKey = 'pdf_page_format';
   static const String _pdfThemeKey = 'pdf_theme_mode';
   static const String _showGpaKey = 'pdf_show_gpa';
+  static const String _lastBackupPathKey = 'last_backup_path';
+  static const String _lastBackupTimeKey = 'last_backup_time';
+  static const String _lastBackupDestinationKey = 'last_backup_destination';
 
   Future<List<ResumeSection>> loadResumeSectionOrder() async {
     final prefs = await SharedPreferences.getInstance();
@@ -118,6 +135,44 @@ class SettingsService {
   Future<void> saveGpaVisibility(bool visible) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_showGpaKey, visible);
+  }
+
+  Future<void> saveLastBackup({
+    required String path,
+    required BackupDestination destination,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_lastBackupPathKey, path);
+    await prefs.setString(
+      _lastBackupDestinationKey,
+      destination.name,
+    );
+    await prefs.setString(
+      _lastBackupTimeKey,
+      DateTime.now().toIso8601String(),
+    );
+  }
+
+  Future<LastBackupInfo> loadLastBackup() async {
+    final prefs = await SharedPreferences.getInstance();
+    final destinationRaw =
+        prefs.getString(_lastBackupDestinationKey) ?? BackupDestination.local.name;
+    final destination = BackupDestination.values.firstWhere(
+      (element) => element.name == destinationRaw,
+      orElse: () => BackupDestination.local,
+    );
+    final path = prefs.getString(_lastBackupPathKey);
+    final rawTime = prefs.getString(_lastBackupTimeKey);
+    DateTime? parsedTime;
+    if (rawTime != null) {
+      parsedTime = DateTime.tryParse(rawTime);
+    }
+
+    return LastBackupInfo(
+      destination: destination,
+      path: path,
+      time: parsedTime,
+    );
   }
 
   ResumeSection? _sectionFromName(String name) {
