@@ -376,6 +376,13 @@ class _TemplateSelector extends StatelessWidget {
         locked: false,
       ),
       (
+        template: ResumeTemplate.ats,
+        title: 'template_ats'.tr,
+        description: 'template_ats_desc'.tr,
+        icon: Icons.description_outlined,
+        locked: false,
+      ),
+      (
         template: ResumeTemplate.modern,
         title: 'template_modern'.tr,
         description: 'template_modern_desc'.tr,
