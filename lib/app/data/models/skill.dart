@@ -11,9 +11,17 @@ class Skill {
     required this.level,
   });
 
-  Map<String, dynamic> toMap() {
+  /// ایجاد نمونه جدید با شناسه پایگاه‌داده بدون اتکا به copyWith
+  Skill withDatabaseId(int newId) => Skill(
+        id: newId,
+        profileId: profileId,
+        name: name,
+        level: level,
+      );
+
+  Map<String, dynamic> toMap({bool includeId = true}) {
     return {
-      'id': id,
+      if (includeId) 'id': id,
       'profileId': profileId,
       'name': name,
       'level': level,
@@ -28,4 +36,8 @@ class Skill {
       level: map['level'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory Skill.fromJson(Map<String, dynamic> json) => Skill.fromMap(json);
 }
