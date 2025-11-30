@@ -5,8 +5,15 @@ import '../../data/models/skill.dart';
 import '../../utils/validators.dart';
 import 'skill_controller.dart';
 
-class SkillView extends GetView<SkillController> {
+class SkillView extends StatefulWidget {
   SkillView({super.key});
+
+  @override
+  State<SkillView> createState() => _SkillViewState();
+}
+
+class _SkillViewState extends State<SkillView> {
+  final SkillController controller = Get.find<SkillController>();
 
   final _formKey = GlobalKey<FormState>();
   final TextEditingController profileIdController = TextEditingController(text: '1');

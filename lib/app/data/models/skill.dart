@@ -53,19 +53,13 @@ class Skill {
     int? id,
     int? profileId,
     String? name,
-    SkillCategory? category,  // اصلاح برای دسته بندی
-    int? levelValue,          // اصلاح برای سطح
-    SkillProficiency? proficiency,  // اصلاح برای مهارت
-    int? sortOrder,
+    String? level,
   }) {
     return Skill(
       id: id ?? this.id,
       profileId: profileId ?? this.profileId,
       name: name ?? this.name,
-      category: category ?? this.category, // اصلاح برای دسته بندی
-      levelValue: levelValue ?? this.levelValue,  // اصلاح برای سطح
-      proficiency: proficiency ?? this.proficiency, // اصلاح برای مهارت
-      sortOrder: sortOrder ?? this.sortOrder,
+      level: level ?? this.level,
     );
   }
 
