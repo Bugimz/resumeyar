@@ -1,23 +1,50 @@
 import 'package:get/get.dart';
 
 import '../../data/models/certification.dart';
+import '../../data/repositories/certification_repository.dart';
 
 class CertificationController extends GetxController {
-  final RxList<Certification> certifications = <Certification>[].obs;
-  int _nextId = 1;
+  CertificationController({required this.repository});
+
+  final CertificationRepository repository;
+
+  final certifications = <Certification>[].obs;
+  int? lastProfileId;
+
+  int _nextSortOrder() {
+    if (certifications.isEmpty) {
+      return 0;
+    }
+    return certifications.map((cert) => cert.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
+  }
+
+  @override
+  void onInit() {
+    super.onInit();
+    load(1);
+  }
+
+  Future<void> load(int profileId) async {
+    lastProfileId = profileId;
+    certifications.assignAll(await repository.getByProfile(profileId));
+  }
 
   Future<void> save(Certification certification) async {
-    certifications.add(certification.copyWith(id: _nextId++));
+    await repository.create(
+      certification.copyWith(sortOrder: certification.sortOrder >= 0 ? certification.sortOrder : _nextSortOrder()),
+    );
+    await load(certification.profileId);
   }
 
   Future<void> updateCertification(Certification certification) async {
-    final index =
-        certifications.indexWhere((item) => item.id == certification.id);
-    if (index == -1) return;
-    certifications[index] = certification;
+    await repository.update(certification);
+    await load(certification.profileId);
   }
 
   Future<void> delete(int id) async {
-    certifications.removeWhere((item) => item.id == id);
+    await repository.delete(id);
+    if (lastProfileId != null) {
+      await load(lastProfileId!);
+    }
   }
 }
