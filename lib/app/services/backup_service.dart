@@ -194,6 +194,14 @@ class BackupService {
           title: _requireString(map, 'title'),
           description: _requireString(map, 'description'),
           link: _requireString(map, 'link'),
+          role: _optionalString(map, 'role') ?? '',
+          responsibilities: _stringList(map, 'responsibilities'),
+          techTags: _stringList(map, 'techTags'),
+          demoLink: _optionalString(map, 'demoLink') ?? '',
+          githubLink: _optionalString(map, 'githubLink') ?? '',
+          liveLink: _optionalString(map, 'liveLink') ?? '',
+          thumbnailUrl: _optionalString(map, 'thumbnailUrl') ?? '',
+          isFeatured: _optionalBool(map, 'isFeatured') ?? false,
         );
 
         await txn.insert(

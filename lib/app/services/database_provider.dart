@@ -25,7 +25,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 6,
+      version: 7,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -102,6 +102,14 @@ class DatabaseProvider {
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             link TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT '',
+            responsibilities TEXT NOT NULL DEFAULT '[]',
+            techTags TEXT NOT NULL DEFAULT '[]',
+            demoLink TEXT NOT NULL DEFAULT '',
+            githubLink TEXT NOT NULL DEFAULT '',
+            liveLink TEXT NOT NULL DEFAULT '',
+            thumbnailUrl TEXT NOT NULL DEFAULT '',
+            isFeatured INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -186,6 +194,24 @@ class DatabaseProvider {
               "ALTER TABLE educations ADD COLUMN courses TEXT NOT NULL DEFAULT '[]'");
           await db.execute(
               'ALTER TABLE educations ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0');
+        }
+
+        if (oldVersion < 7) {
+          await db.execute("ALTER TABLE projects ADD COLUMN role TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE projects ADD COLUMN responsibilities TEXT NOT NULL DEFAULT '[]'");
+          await db
+              .execute("ALTER TABLE projects ADD COLUMN techTags TEXT NOT NULL DEFAULT '[]'");
+          await db.execute(
+              "ALTER TABLE projects ADD COLUMN demoLink TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE projects ADD COLUMN githubLink TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE projects ADD COLUMN liveLink TEXT NOT NULL DEFAULT ''");
+          await db.execute(
+              "ALTER TABLE projects ADD COLUMN thumbnailUrl TEXT NOT NULL DEFAULT ''");
+          await db
+              .execute("ALTER TABLE projects ADD COLUMN isFeatured INTEGER NOT NULL DEFAULT 0");
         }
       },
     );
