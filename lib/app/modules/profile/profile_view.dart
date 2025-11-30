@@ -14,21 +14,41 @@ class ProfileView extends GetView<ProfileController> {
 
   final _formKey = GlobalKey<FormState>();
   final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController jobTitleController = TextEditingController();
+  final TextEditingController locationController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController portfolioController = TextEditingController();
+  final TextEditingController linkedInController = TextEditingController();
+  final TextEditingController githubController = TextEditingController();
   final TextEditingController summaryController = TextEditingController();
   final Rxn<ResumeProfile> editingProfile = Rxn<ResumeProfile>();
   final RxnString imagePath = RxnString();
   final RxBool isFormValid = false.obs;
+  final RxString previewFullName = ''.obs;
+  final RxString previewJobTitle = ''.obs;
+  final RxString previewLocation = ''.obs;
+  final RxString previewEmail = ''.obs;
+  final RxString previewPhone = ''.obs;
+  final RxString previewPortfolio = ''.obs;
+  final RxString previewLinkedIn = ''.obs;
+  final RxString previewGithub = ''.obs;
+  final RxString previewSummary = ''.obs;
 
   void _resetForm() {
     editingProfile.value = null;
     fullNameController.clear();
+    jobTitleController.clear();
+    locationController.clear();
     emailController.clear();
     phoneController.clear();
+    portfolioController.clear();
+    linkedInController.clear();
+    githubController.clear();
     summaryController.clear();
     imagePath.value = null;
     isFormValid.value = false;
+    _updatePreviewFromControllers();
   }
 
   void _updateFormValidity() {
@@ -39,6 +59,7 @@ class ProfileView extends GetView<ProfileController> {
     }
 
     isFormValid.value = currentState.validate();
+    _updatePreviewFromControllers();
   }
 
   Future<void> _submit() async {
@@ -49,9 +70,14 @@ class ProfileView extends GetView<ProfileController> {
     final profile = ResumeProfile(
       id: editingProfile.value?.id,
       fullName: fullNameController.text,
+      jobTitle: jobTitleController.text,
+      location: locationController.text,
       email: emailController.text,
       phone: phoneController.text,
       summary: summaryController.text,
+      portfolioUrl: portfolioController.text,
+      linkedInUrl: linkedInController.text,
+      githubUrl: githubController.text,
       imagePath: imagePath.value,
       signaturePath: editingProfile.value?.signaturePath,
     );
@@ -77,7 +103,43 @@ class ProfileView extends GetView<ProfileController> {
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       imagePath.value = pickedFile.path;
+      _updatePreviewFromControllers();
     }
+  }
+
+  void _updatePreviewFromControllers() {
+    previewFullName.value = fullNameController.text;
+    previewJobTitle.value = jobTitleController.text;
+    previewLocation.value = locationController.text;
+    previewEmail.value = emailController.text;
+    previewPhone.value = phoneController.text;
+    previewPortfolio.value = portfolioController.text;
+    previewLinkedIn.value = linkedInController.text;
+    previewGithub.value = githubController.text;
+    previewSummary.value = summaryController.text;
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    FormFieldValidator<String>? validator,
+    int maxLines = 1,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      validator: validator,
+      maxLines: maxLines,
+      onChanged: (_) => _updateFormValidity(),
+    );
+  }
+
+  Widget _buildChip({required IconData icon, required String text}) {
+    return Chip(
+      avatar: Icon(icon, size: 16),
+      label: Text(text),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+    );
   }
 
   @override
