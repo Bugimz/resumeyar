@@ -122,66 +122,51 @@ class PdfService {
       ),
     );
 
+    final defaultTextStyle = pw.TextStyle(
+      color: PdfColors.black,
+      fontSize: 11.5,
+    );
+
     pdf.addPage(
       pw.MultiPage(
         pageTheme: pageTheme,
-        build: (context) => switch (template) {
-          ResumeTemplate.minimal => _buildMinimalTemplate(
-              profile,
-              workExperiences,
-              educations,
-              certifications,
-              languages,
-              interests,
-              skills,
-              projects,
-              isRtl,
-              filteredSectionOrder,
-              showGpa,
-              projectImages,
+        build: (context) {
+          final children = switch (template) {
+            ResumeTemplate.minimal => _buildMinimalTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              ),
+            ResumeTemplate.modern => _buildModernTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              ),
+            ResumeTemplate.elegant => _buildElegantTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              ),
+          };
+
+          return [
+            pw.DefaultTextStyle.merge(
+              style: defaultTextStyle,
+              child: pw.Column(children: children),
             ),
-          ResumeTemplate.modern => _buildModernTemplate(
-              profile,
-              workExperiences,
-              educations,
-              certifications,
-              languages,
-              interests,
-              skills,
-              projects,
-              isRtl,
-              filteredSectionOrder,
-              showGpa,
-              projectImages,
-            ),
-          ResumeTemplate.elegant => _buildElegantTemplate(
-              profile,
-              workExperiences,
-              educations,
-              certifications,
-              languages,
-              interests,
-              skills,
-              projects,
-              isRtl,
-              filteredSectionOrder,
-              showGpa,
-              projectImages,
-            ),
-          ResumeTemplate.ats => _buildAtsTemplate(
-              profile,
-              workExperiences,
-              educations,
-              certifications,
-              languages,
-              interests,
-              skills,
-              projects,
-              isRtl,
-              filteredSectionOrder,
-              showGpa,
-              projectImages,
-            ),
+          ];
         },
       ),
     );

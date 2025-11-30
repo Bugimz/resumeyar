@@ -20,7 +20,7 @@ dependencies:
   printing: ^5.14.2
   shared_preferences: ^2.5.3
   file_picker: ^10.3.7
-  persian_datetime_picker: ^3.2.0
+  persian_datetime_picker: ^2.7.0
   flutter_poolakey:
     git:
       url: https://github.com/OmidHaqi/flutter_poolakey.git
