@@ -1,23 +1,51 @@
 class Interest {
-  final int? id;
-  final String name;
-  final String description;
-
-  const Interest({
+  Interest({
     this.id,
-    required this.name,
-    required this.description,
+    required this.profileId,
+    required this.title,
+    this.details = '',
+    this.sortOrder = 0,
   });
+
+  final int? id;
+  final int profileId;
+  final String title;
+  final String details;
+  final int sortOrder;
 
   Interest copyWith({
     int? id,
-    String? name,
-    String? description,
+    int? profileId,
+    String? title,
+    String? details,
+    int? sortOrder,
   }) {
     return Interest(
       id: id ?? this.id,
-      name: name ?? this.name,
-      description: description ?? this.description,
+      profileId: profileId ?? this.profileId,
+      title: title ?? this.title,
+      details: details ?? this.details,
+      sortOrder: sortOrder ?? this.sortOrder,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'profileId': profileId,
+      'title': title,
+      'details': details,
+      'sortOrder': sortOrder,
+    };
+  }
+
+  factory Interest.fromMap(Map<String, dynamic> map) {
+    return Interest(
+      id: map['id'] as int?,
+      profileId: map['profileId'] as int,
+      title: map['title'] as String,
+      details: map['details'] as String? ?? '',
+      sortOrder: map['sortOrder'] as int? ?? 0,
     );
   }
 }
