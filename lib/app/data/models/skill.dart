@@ -11,6 +11,20 @@ class Skill {
     required this.level,
   });
 
+  Skill copyWith({
+    int? id,
+    int? profileId,
+    String? name,
+    String? level,
+  }) {
+    return Skill(
+      id: id ?? this.id,
+      profileId: profileId ?? this.profileId,
+      name: name ?? this.name,
+      level: level ?? this.level,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -28,4 +42,8 @@ class Skill {
       level: map['level'] as String,
     );
   }
+
+  Map<String, dynamic> toJson() => toMap();
+
+  factory Skill.fromJson(Map<String, dynamic> json) => Skill.fromMap(json);
 }
