@@ -16,6 +16,9 @@ class WorkView extends GetView<WorkController> {
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController achievementsController = TextEditingController();
+  final TextEditingController techTagsController = TextEditingController();
+  final TextEditingController metricController = TextEditingController();
   final Rxn<WorkExperience> editingExperience = Rxn<WorkExperience>();
   final RxBool isFormValid = false.obs;
 
@@ -26,6 +29,9 @@ class WorkView extends GetView<WorkController> {
     startDateController.clear();
     endDateController.clear();
     descriptionController.clear();
+    achievementsController.clear();
+    techTagsController.clear();
+    metricController.clear();
     isFormValid.value = false;
   }
 
@@ -69,6 +75,22 @@ class WorkView extends GetView<WorkController> {
     return profileId;
   }
 
+  List<String> _parseAchievements() {
+    return achievementsController.text
+        .split('\n')
+        .map((e) => e.trim())
+        .where((element) => element.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _parseTags() {
+    return techTagsController.text
+        .split(',')
+        .map((e) => e.trim())
+        .where((element) => element.isNotEmpty)
+        .toList();
+  }
+
   Future<void> _loadList() async {
     final profileId = _parseProfileId();
     if (profileId != null) {
@@ -94,6 +116,11 @@ class WorkView extends GetView<WorkController> {
       startDate: startDateController.text,
       endDate: endDateController.text,
       description: descriptionController.text,
+      achievements: _parseAchievements(),
+      techTags: _parseTags(),
+      metric: metricController.text.trim().isEmpty
+          ? null
+          : metricController.text.trim(),
     );
 
     if (editingExperience.value == null) {
@@ -313,6 +340,50 @@ class WorkView extends GetView<WorkController> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildAchievementsSection(List<String> achievements, bool isWide) {
+    final chips = achievements
+        .map((achievement) => Chip(label: Text(achievement)))
+        .toList();
+
+    if (isWide) {
+      return Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: chips,
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: achievements
+          .map(
+            (achievement) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('• '),
+                  Expanded(child: Text(achievement)),
+                ],
+              ),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _buildTechTags(List<String> tags) {
+    if (tags.isEmpty) {
+      return const Text('No tech tags added');
+    }
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: tags.map((tag) => Chip(label: Text(tag))).toList(),
     );
   }
 }
