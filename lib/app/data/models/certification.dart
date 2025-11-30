@@ -13,6 +13,26 @@ class Certification {
     required this.credentialUrl,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'issuer': issuer,
+      'issueDate': issueDate,
+      'credentialUrl': credentialUrl,
+    };
+  }
+
+  factory Certification.fromMap(Map<String, dynamic> map) {
+    return Certification(
+      id: map['id'] as int?,
+      title: map['title'] as String? ?? '',
+      issuer: map['issuer'] as String? ?? '',
+      issueDate: map['issueDate'] as String? ?? '',
+      credentialUrl: map['credentialUrl'] as String? ?? '',
+    );
+  }
+
   Certification copyWith({
     int? id,
     String? title,

@@ -9,6 +9,22 @@ class Interest {
     required this.description,
   });
 
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+    };
+  }
+
+  factory Interest.fromMap(Map<String, dynamic> map) {
+    return Interest(
+      id: map['id'] as int?,
+      name: map['name'] as String? ?? '',
+      description: map['description'] as String? ?? '',
+    );
+  }
+
   Interest copyWith({
     int? id,
     String? name,

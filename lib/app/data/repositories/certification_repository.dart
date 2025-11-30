@@ -11,21 +11,17 @@ class CertificationRepository {
     return db.insert(tableName, certification.toMap());
   }
 
-  Future<List<Certification>> getByProfile(int profileId) async {
+  Future<Certification?> getById(int id) async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(
-      tableName,
-      where: 'profileId = ?',
-      whereArgs: [profileId],
-      orderBy: 'sortOrder ASC, issueDate DESC',
-    );
-    return result.map(Certification.fromMap).toList();
+    final result = await db.query(tableName, where: 'id = ?', whereArgs: [id]);
+    if (result.isEmpty) return null;
+    return Certification.fromMap(result.first);
   }
 
   Future<List<Certification>> getAll() async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName, orderBy: 'sortOrder ASC, issueDate DESC');
-    return result.map(Certification.fromMap).toList();
+    final result = await db.query(tableName, orderBy: 'id DESC');
+    return result.map((map) => Certification.fromMap(map)).toList();
   }
 
   Future<int> update(Certification certification) async {

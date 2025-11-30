@@ -11,21 +11,17 @@ class LanguageRepository {
     return db.insert(tableName, language.toMap());
   }
 
-  Future<List<Language>> getByProfile(int profileId) async {
+  Future<Language?> getById(int id) async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(
-      tableName,
-      where: 'profileId = ?',
-      whereArgs: [profileId],
-      orderBy: 'sortOrder ASC, name ASC',
-    );
-    return result.map(Language.fromMap).toList();
+    final result = await db.query(tableName, where: 'id = ?', whereArgs: [id]);
+    if (result.isEmpty) return null;
+    return Language.fromMap(result.first);
   }
 
   Future<List<Language>> getAll() async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName, orderBy: 'sortOrder ASC, name ASC');
-    return result.map(Language.fromMap).toList();
+    final result = await db.query(tableName, orderBy: 'id DESC');
+    return result.map((map) => Language.fromMap(map)).toList();
   }
 
   Future<int> update(Language language) async {

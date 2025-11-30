@@ -11,21 +11,17 @@ class InterestRepository {
     return db.insert(tableName, interest.toMap());
   }
 
-  Future<List<Interest>> getByProfile(int profileId) async {
+  Future<Interest?> getById(int id) async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(
-      tableName,
-      where: 'profileId = ?',
-      whereArgs: [profileId],
-      orderBy: 'sortOrder ASC, title ASC',
-    );
-    return result.map(Interest.fromMap).toList();
+    final result = await db.query(tableName, where: 'id = ?', whereArgs: [id]);
+    if (result.isEmpty) return null;
+    return Interest.fromMap(result.first);
   }
 
   Future<List<Interest>> getAll() async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName, orderBy: 'sortOrder ASC, title ASC');
-    return result.map(Interest.fromMap).toList();
+    final result = await db.query(tableName, orderBy: 'id DESC');
+    return result.map((map) => Interest.fromMap(map)).toList();
   }
 
   Future<int> update(Interest interest) async {

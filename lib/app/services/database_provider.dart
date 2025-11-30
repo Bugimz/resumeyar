@@ -25,7 +25,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 3,
+      version: 4,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -146,6 +146,32 @@ class DatabaseProvider {
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
+
+        await db.execute('''
+          CREATE TABLE languages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            proficiency TEXT NOT NULL
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE interests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE certifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            issuer TEXT NOT NULL,
+            issueDate TEXT NOT NULL,
+            credentialUrl TEXT NOT NULL
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
@@ -157,6 +183,34 @@ class DatabaseProvider {
           await db.execute(
             "ALTER TABLE skills ADD COLUMN category TEXT NOT NULL DEFAULT 'General'",
           );
+        }
+
+        if (oldVersion < 4) {
+          await db.execute('''
+            CREATE TABLE languages (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              proficiency TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE interests (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              description TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE certifications (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              title TEXT NOT NULL,
+              issuer TEXT NOT NULL,
+              issueDate TEXT NOT NULL,
+              credentialUrl TEXT NOT NULL
+            )
+          ''');
         }
       },
     );
