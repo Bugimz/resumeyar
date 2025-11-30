@@ -3,13 +3,19 @@ import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 
 import '../data/models/education.dart';
+import '../data/models/interest.dart';
+import '../data/models/language.dart';
 import '../data/models/project.dart';
 import '../data/models/resume_profile.dart';
+import '../data/models/certification.dart';
 import '../data/models/skill.dart';
 import '../data/models/work_experience.dart';
 import '../data/repositories/education_repository.dart';
+import '../data/repositories/interest_repository.dart';
+import '../data/repositories/language_repository.dart';
 import '../data/repositories/project_repository.dart';
 import '../data/repositories/resume_profile_repository.dart';
+import '../data/repositories/certification_repository.dart';
 import '../data/repositories/skill_repository.dart';
 import '../data/repositories/work_experience_repository.dart';
 import 'database_provider.dart';
@@ -19,6 +25,9 @@ class BackupService {
     required this.resumeProfileRepository,
     required this.workExperienceRepository,
     required this.educationRepository,
+    required this.certificationRepository,
+    required this.languageRepository,
+    required this.interestRepository,
     required this.skillRepository,
     required this.projectRepository,
   });
@@ -26,6 +35,9 @@ class BackupService {
   final ResumeProfileRepository resumeProfileRepository;
   final WorkExperienceRepository workExperienceRepository;
   final EducationRepository educationRepository;
+  final CertificationRepository certificationRepository;
+  final LanguageRepository languageRepository;
+  final InterestRepository interestRepository;
   final SkillRepository skillRepository;
   final ProjectRepository projectRepository;
 
@@ -33,6 +45,9 @@ class BackupService {
     final profiles = await resumeProfileRepository.getAll();
     final workExperiences = await workExperienceRepository.getAll();
     final educations = await educationRepository.getAll();
+    final certifications = await certificationRepository.getAll();
+    final languages = await languageRepository.getAll();
+    final interests = await interestRepository.getAll();
     final skills = await skillRepository.getAll();
     final projects = await projectRepository.getAll();
 
@@ -41,6 +56,9 @@ class BackupService {
       'workExperiences':
           workExperiences.map((experience) => experience.toMap()).toList(),
       'educations': educations.map((education) => education.toMap()).toList(),
+      'certifications': certifications.map((cert) => cert.toMap()).toList(),
+      'languages': languages.map((lang) => lang.toMap()).toList(),
+      'interests': interests.map((interest) => interest.toMap()).toList(),
       'skills': skills.map((skill) => skill.toMap()).toList(),
       'projects': projects.map((project) => project.toMap()).toList(),
     };
@@ -67,6 +85,8 @@ class BackupService {
       'startDate',
       'endDate',
       'description',
+      'achievements',
+      'techTags',
     ]);
     final educationMaps = _validateMapList(data['educations'], const [
       'profileId',
@@ -77,8 +97,23 @@ class BackupService {
       'endDate',
       'description',
     ]);
+    final certificationMaps = _validateMapList(data['certifications'] ?? [], const [
+      'profileId',
+      'name',
+      'issuer',
+      'issueDate',
+    ]);
+    final languageMaps = _validateMapList(data['languages'] ?? [], const [
+      'profileId',
+      'name',
+      'level',
+    ]);
+    final interestMaps = _validateMapList(data['interests'] ?? [], const [
+      'profileId',
+      'title',
+    ]);
     final skillMaps =
-        _validateMapList(data['skills'], const ['profileId', 'name', 'level']);
+        _validateMapList(data['skills'], const ['profileId', 'name']);
     final projectMaps = _validateMapList(data['projects'], const [
       'profileId',
       'title',
@@ -91,6 +126,9 @@ class BackupService {
     await db.transaction((txn) async {
       await txn.delete(ProjectRepository.tableName);
       await txn.delete(SkillRepository.tableName);
+      await txn.delete(InterestRepository.tableName);
+      await txn.delete(LanguageRepository.tableName);
+      await txn.delete(CertificationRepository.tableName);
       await txn.delete(EducationRepository.tableName);
       await txn.delete(WorkExperienceRepository.tableName);
       await txn.delete(ResumeProfileRepository.tableName);
@@ -100,9 +138,14 @@ class BackupService {
       for (final map in profileMaps) {
         final profile = ResumeProfile(
           fullName: _requireString(map, 'fullName'),
+          jobTitle: _optionalString(map, 'jobTitle') ?? '',
+          location: _optionalString(map, 'location') ?? '',
           email: _requireString(map, 'email'),
           phone: _requireString(map, 'phone'),
           summary: _requireString(map, 'summary'),
+          portfolioUrl: _optionalString(map, 'portfolioUrl') ?? '',
+          linkedInUrl: _optionalString(map, 'linkedInUrl') ?? '',
+          githubUrl: _optionalString(map, 'githubUrl') ?? '',
           imagePath: _optionalString(map, 'imagePath'),
           signaturePath: _optionalString(map, 'signaturePath'),
         );
@@ -127,11 +170,14 @@ class BackupService {
           startDate: _requireString(map, 'startDate'),
           endDate: _requireString(map, 'endDate'),
           description: _requireString(map, 'description'),
+          achievements: _stringList(map, 'achievements'),
+          techTags: _stringList(map, 'techTags'),
+          metric: _optionalString(map, 'metric'),
         );
 
         await txn.insert(
           WorkExperienceRepository.tableName,
-          experience.toMap()..remove('id'),
+          experience.toDbMap()..remove('id'),
         );
       }
 
@@ -145,6 +191,11 @@ class BackupService {
           startDate: _requireString(map, 'startDate'),
           endDate: _requireString(map, 'endDate'),
           description: _requireString(map, 'description'),
+          gpa: _optionalDouble(map, 'gpa'),
+          showGpa: _optionalBool(map, 'showGpa') ?? false,
+          honors: _stringList(map, 'honors'),
+          courses: _stringList(map, 'courses'),
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
         );
 
         await txn.insert(
@@ -153,12 +204,64 @@ class BackupService {
         );
       }
 
+      for (final map in certificationMaps) {
+        final profileId = _resolveProfileId(map, profileIdMap);
+        final certification = Certification(
+          profileId: profileId,
+          name: _requireString(map, 'name'),
+          issuer: _requireString(map, 'issuer'),
+          issueDate: _requireString(map, 'issueDate'),
+          credentialUrl: _optionalString(map, 'credentialUrl') ?? '',
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
+        );
+
+        await txn.insert(
+          CertificationRepository.tableName,
+          certification.toMap()..remove('id'),
+        );
+      }
+
+      for (final map in languageMaps) {
+        final profileId = _resolveProfileId(map, profileIdMap);
+        final language = Language(
+          profileId: profileId,
+          name: _requireString(map, 'name'),
+          level: _requireString(map, 'level'),
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
+        );
+
+        await txn.insert(
+          LanguageRepository.tableName,
+          language.toMap()..remove('id'),
+        );
+      }
+
+      for (final map in interestMaps) {
+        final profileId = _resolveProfileId(map, profileIdMap);
+        final interest = Interest(
+          profileId: profileId,
+          title: _requireString(map, 'title'),
+          details: _optionalString(map, 'details') ?? '',
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
+        );
+
+        await txn.insert(
+          InterestRepository.tableName,
+          interest.toMap()..remove('id'),
+        );
+      }
+
       for (final map in skillMaps) {
         final profileId = _resolveProfileId(map, profileIdMap);
         final skill = Skill(
           profileId: profileId,
           name: _requireString(map, 'name'),
-          level: _requireString(map, 'level'),
+          category: skillCategoryFromString(
+              _optionalString(map, 'category') ?? SkillCategory.language.name),
+          levelValue: _optionalInt(map, 'levelValue') ?? int.tryParse(_optionalString(map, 'level') ?? ''),
+          proficiency:
+              skillProficiencyFromString(_optionalString(map, 'proficiency')),
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
         );
 
         await txn.insert(
@@ -174,6 +277,14 @@ class BackupService {
           title: _requireString(map, 'title'),
           description: _requireString(map, 'description'),
           link: _requireString(map, 'link'),
+          role: _optionalString(map, 'role') ?? '',
+          responsibilities: _stringList(map, 'responsibilities'),
+          techTags: _stringList(map, 'techTags'),
+          demoLink: _optionalString(map, 'demoLink') ?? '',
+          githubLink: _optionalString(map, 'githubLink') ?? '',
+          liveLink: _optionalString(map, 'liveLink') ?? '',
+          thumbnailUrl: _optionalString(map, 'thumbnailUrl') ?? '',
+          isFeatured: _optionalBool(map, 'isFeatured') ?? false,
         );
 
         await txn.insert(
@@ -222,6 +333,71 @@ class BackupService {
       return value;
     }
     return null;
+  }
+
+  int? _optionalInt(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String && value.isNotEmpty) {
+      return int.tryParse(value);
+    }
+    return null;
+  }
+
+  double? _optionalDouble(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    if (value is String && value.isNotEmpty) {
+      return double.tryParse(value);
+    }
+
+    return null;
+  }
+
+  bool? _optionalBool(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is bool) {
+      return value;
+    }
+
+    if (value is num) {
+      return value != 0;
+    }
+
+    if (value is String) {
+      if (value == 'true' || value == '1') {
+        return true;
+      }
+      if (value == 'false' || value == '0') {
+        return false;
+      }
+    }
+
+    return null;
+  }
+
+  List<String> _stringList(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is List) {
+      return value.whereType<String>().toList();
+    }
+
+    if (value is String && value.isNotEmpty) {
+      final decoded = jsonDecode(value);
+      if (decoded is List) {
+        return decoded.whereType<String>().toList();
+      }
+    }
+
+    return const [];
   }
 
   int _resolveProfileId(Map<String, dynamic> map, Map<int, int> profileIdMap) {
