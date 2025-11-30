@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf_google_fonts/pdf_google_fonts.dart';
 import 'package:printing/printing.dart';
 
 import '../data/models/education.dart';
