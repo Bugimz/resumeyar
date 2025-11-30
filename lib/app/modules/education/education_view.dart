@@ -16,8 +16,15 @@ class EducationView extends GetView<EducationController> {
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
+  final TextEditingController gpaController = TextEditingController();
+  final TextEditingController honorController = TextEditingController();
+  final TextEditingController courseController = TextEditingController();
+  final TextEditingController sortOrderController = TextEditingController();
   final Rxn<Education> editingEducation = Rxn<Education>();
   final RxBool isFormValid = false.obs;
+  final RxBool showGpa = false.obs;
+  final RxList<String> honors = <String>[].obs;
+  final RxList<String> courses = <String>[].obs;
 
   void _resetForm() {
     editingEducation.value = null;
@@ -27,7 +34,27 @@ class EducationView extends GetView<EducationController> {
     startDateController.clear();
     endDateController.clear();
     descriptionController.clear();
+    gpaController.clear();
+    honorController.clear();
+    courseController.clear();
+    sortOrderController.clear();
+    honors.clear();
+    courses.clear();
+    showGpa.value = false;
     isFormValid.value = false;
+  }
+
+  void _addChipItem(TextEditingController controller, RxList<String> target) {
+    final entries = controller.text
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet();
+
+    if (entries.isNotEmpty) {
+      target.addAll(entries);
+      controller.clear();
+    }
   }
 
   void _updateFormValidity() {
@@ -65,6 +92,11 @@ class EducationView extends GetView<EducationController> {
       return;
     }
 
+    final parsedSortOrder = int.tryParse(sortOrderController.text);
+    final defaultSortOrder = controller.educations
+        .where((element) => element.school == schoolController.text)
+        .length;
+
     final education = Education(
       id: editingEducation.value?.id,
       profileId: profileId,
@@ -74,6 +106,11 @@ class EducationView extends GetView<EducationController> {
       startDate: startDateController.text,
       endDate: endDateController.text,
       description: descriptionController.text,
+      gpa: double.tryParse(gpaController.text),
+      showGpa: showGpa.value,
+      honors: honors.toList(),
+      courses: courses.toList(),
+      sortOrder: parsedSortOrder ?? defaultSortOrder,
     );
 
     if (editingEducation.value == null) {
@@ -180,12 +217,75 @@ class EducationView extends GetView<EducationController> {
                           SizedBox(
                             width: fieldWidth,
                             child: TextFormField(
+                              controller: sortOrderController,
+                              decoration:
+                                  InputDecoration(labelText: 'sort_order'.tr),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(decimal: false),
+                              validator: FormValidators.optionalNumeric,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
                               controller: descriptionController,
                               decoration: InputDecoration(
                                   labelText: 'description_label'.tr),
                               validator: FormValidators.requiredField,
                               maxLines: 3,
                               onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: gpaController,
+                                    decoration:
+                                        InputDecoration(labelText: 'gpa_label'.tr),
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(decimal: true),
+                                    validator: FormValidators.optionalNumeric,
+                                    onChanged: (_) => _updateFormValidity(),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Obx(
+                                  () => Column(
+                                    children: [
+                                      Text(showGpa.value
+                                          ? 'gpa_visible'.tr
+                                          : 'gpa_hidden'.tr),
+                                      Switch(
+                                        value: showGpa.value,
+                                        onChanged: (value) => showGpa.value = value,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: _ChipEditor(
+                              label: 'honors_label'.tr,
+                              controller: honorController,
+                              values: honors,
+                              onAdd: () => _addChipItem(honorController, honors),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
+                            child: _ChipEditor(
+                              label: 'courses_label'.tr,
+                              controller: courseController,
+                              values: courses,
+                              onAdd: () => _addChipItem(courseController, courses),
                             ),
                           ),
                           SizedBox(
@@ -240,13 +340,60 @@ class EducationView extends GetView<EducationController> {
                           return Card(
                             child: ListTile(
                               title: Text('${education.school} • ${education.degree}'),
-                              subtitle: Text(
-                                '${education.fieldOfStudy}\n${education.startDate} - ${education.endDate}\n${education.description}',
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                      '${education.fieldOfStudy}\n${education.startDate} - ${education.endDate}'),
+                                  const SizedBox(height: 4),
+                                  Text(education.description),
+                                  if (education.showGpa && education.gpa != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        '${'gpa_label'.tr}: ${education.gpa!.toStringAsFixed(2)}',
+                                      ),
+                                    ),
+                                  if (education.honors.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 6,
+                                        children: education.honors
+                                            .map((honor) => Chip(label: Text(honor)))
+                                            .toList(),
+                                      ),
+                                    ),
+                                  if (education.courses.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Wrap(
+                                        spacing: 8,
+                                        runSpacing: 6,
+                                        children: education.courses
+                                            .map((course) => Chip(label: Text(course)))
+                                            .toList(),
+                                      ),
+                                    ),
+                                ],
                               ),
-                              isThreeLine: true,
+                              isThreeLine: false,
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_upward),
+                                    tooltip: 'move_up'.tr,
+                                    onPressed: () => controller
+                                        .updateSortOrder(education, -1),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.arrow_downward),
+                                    tooltip: 'move_down'.tr,
+                                    onPressed: () => controller
+                                        .updateSortOrder(education, 1),
+                                  ),
                                   IconButton(
                                     icon: const Icon(Icons.edit),
                                     onPressed: () {
@@ -260,6 +407,13 @@ class EducationView extends GetView<EducationController> {
                                       endDateController.text = education.endDate;
                                       descriptionController.text =
                                           education.description;
+                                      gpaController.text =
+                                          education.gpa?.toString() ?? '';
+                                      honors.assignAll(education.honors);
+                                      courses.assignAll(education.courses);
+                                      showGpa.value = education.showGpa;
+                                      sortOrderController.text =
+                                          education.sortOrder.toString();
                                       _updateFormValidity();
                                     },
                                   ),
@@ -285,6 +439,55 @@ class EducationView extends GetView<EducationController> {
           );
         },
       ),
+    );
+  }
+}
+
+class _ChipEditor extends StatelessWidget {
+  const _ChipEditor({
+    required this.label,
+    required this.controller,
+    required this.values,
+    required this.onAdd,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final RxList<String> values;
+  final VoidCallback onAdd;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: label,
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: onAdd,
+            ),
+          ),
+          onFieldSubmitted: (_) => onAdd(),
+        ),
+        const SizedBox(height: 8),
+        Obx(
+          () => Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: values
+                .map(
+                  (value) => InputChip(
+                    label: Text(value),
+                    onDeleted: () => values.remove(value),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ],
     );
   }
 }

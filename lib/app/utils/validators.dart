@@ -22,6 +22,18 @@ class FormValidators {
     return null;
   }
 
+  static String? optionalNumeric(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    if (double.tryParse(value.trim()) == null) {
+      return 'invalid_number'.tr;
+    }
+
+    return null;
+  }
+
   static String? email(String? value) {
     final required = requiredField(value);
     if (required != null) {

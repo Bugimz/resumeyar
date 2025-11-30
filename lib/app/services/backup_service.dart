@@ -155,6 +155,11 @@ class BackupService {
           startDate: _requireString(map, 'startDate'),
           endDate: _requireString(map, 'endDate'),
           description: _requireString(map, 'description'),
+          gpa: _optionalDouble(map, 'gpa'),
+          showGpa: _optionalBool(map, 'showGpa') ?? false,
+          honors: _stringList(map, 'honors'),
+          courses: _stringList(map, 'courses'),
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
         );
 
         await txn.insert(
@@ -250,6 +255,41 @@ class BackupService {
     if (value is String && value.isNotEmpty) {
       return int.tryParse(value);
     }
+    return null;
+  }
+
+  double? _optionalDouble(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    if (value is String && value.isNotEmpty) {
+      return double.tryParse(value);
+    }
+
+    return null;
+  }
+
+  bool? _optionalBool(Map<String, dynamic> map, String key) {
+    final value = map[key];
+    if (value is bool) {
+      return value;
+    }
+
+    if (value is num) {
+      return value != 0;
+    }
+
+    if (value is String) {
+      if (value == 'true' || value == '1') {
+        return true;
+      }
+      if (value == 'false' || value == '0') {
+        return false;
+      }
+    }
+
     return null;
   }
 

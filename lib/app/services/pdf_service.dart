@@ -309,6 +309,11 @@ class PdfService {
                   '${education.degree} in ${education.fieldOfStudy}',
                   textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
                 ),
+                if (education.showGpa && education.gpa != null)
+                  pw.Text(
+                    'GPA: ${education.gpa!.toStringAsFixed(2)}',
+                    textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
+                  ),
                 pw.Text(
                   '${education.startDate} - ${education.endDate}',
                   textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
@@ -317,6 +322,44 @@ class PdfService {
                   education.description,
                   textAlign: isRtl ? pw.TextAlign.right : pw.TextAlign.left,
                 ),
+                if (education.honors.isNotEmpty)
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(top: 4),
+                    child: pw.Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: education.honors
+                          .map((honor) => pw.Container(
+                                padding: const pw.EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: pw.BoxDecoration(
+                                  borderRadius: pw.BorderRadius.circular(12),
+                                  color: PdfColor.fromHex('#e0f7fa'),
+                                ),
+                                child: pw.Text(honor),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                if (education.courses.isNotEmpty)
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.only(top: 4),
+                    child: pw.Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: education.courses
+                          .map((course) => pw.Container(
+                                padding: const pw.EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: pw.BoxDecoration(
+                                  borderRadius: pw.BorderRadius.circular(12),
+                                  color: PdfColor.fromHex('#e8eaf6'),
+                                ),
+                                child: pw.Text(course),
+                              ))
+                          .toList(),
+                    ),
+                  ),
               ],
             ),
           ),
