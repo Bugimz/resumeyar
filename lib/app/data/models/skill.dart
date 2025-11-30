@@ -1,35 +1,3 @@
-enum SkillCategory { language, framework, tool }
-
-enum SkillProficiency { beginner, intermediate, expert }
-
-SkillCategory skillCategoryFromString(String? value) {
-  return SkillCategory.values.firstWhere(
-    (category) => category.name == value,
-    orElse: () => SkillCategory.language,
-  );
-}
-
-SkillProficiency? skillProficiencyFromString(String? value) {
-  if (value == null) {
-    return null;
-  }
-
-  return SkillProficiency.values.firstWhereOrNull(
-    (proficiency) => proficiency.name.toLowerCase() == value.toLowerCase(),
-  );
-}
-
-extension on Iterable<SkillProficiency> {
-  SkillProficiency? firstWhereOrNull(bool Function(SkillProficiency) test) {
-    for (final element in this) {
-      if (test(element)) {
-        return element;
-      }
-    }
-    return null;
-  }
-}
-
 class Skill {
   final int? id;
   final int profileId;
@@ -53,13 +21,19 @@ class Skill {
     int? id,
     int? profileId,
     String? name,
-    String? level,
+    SkillCategory? category,  // اصلاح برای دسته بندی
+    int? levelValue,          // اصلاح برای سطح
+    SkillProficiency? proficiency,  // اصلاح برای مهارت
+    int? sortOrder,
   }) {
     return Skill(
       id: id ?? this.id,
       profileId: profileId ?? this.profileId,
       name: name ?? this.name,
-      level: level ?? this.level,
+      category: category ?? this.category, // اصلاح برای دسته بندی
+      levelValue: levelValue ?? this.levelValue,  // اصلاح برای سطح
+      proficiency: proficiency ?? this.proficiency, // اصلاح برای مهارت
+      sortOrder: sortOrder ?? this.sortOrder,
     );
   }
 
