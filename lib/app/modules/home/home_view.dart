@@ -219,97 +219,114 @@ class _HeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.heroGradient,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.35),
-            blurRadius: 22,
-            offset: const Offset(0, 14),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 600;
+        final iconHeight = isCompact ? 84.0 : 96.0;
+        final iconWidth = isCompact ? 64.0 : 72.0;
+        final iconSize = isCompact ? 32.0 : 40.0;
+
+        final trailingIcon = Container(
+          height: iconHeight,
+          width: iconWidth,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white24),
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          child: Icon(
+            Icons.description_outlined,
+            size: iconSize,
+            color: Colors.white,
+          ),
+        );
+
+        final content = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white24),
+              ),
+              child: Text(
+                isPremium ? 'premium_active_title'.tr : 'premium_title'.tr,
+                style: theme.textTheme.labelMedium
+                    ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              isPremium ? 'premium_active_message'.tr : 'hero_title'.tr,
+              style: theme.textTheme.titleLarge
+                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              isPremium ? 'hero_premium_body'.tr : 'hero_body'.tr,
+              style:
+                  theme.textTheme.bodyMedium?.copyWith(color: Colors.white.withOpacity(0.9)),
+            ),
+            const SizedBox(height: 14),
+            Row(
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white24),
-                  ),
-                  child: Text(
-                    isPremium ? 'premium_active_title'.tr : 'premium_title'.tr,
-                    style: theme.textTheme.labelMedium
-                        ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  isPremium
-                      ? 'premium_active_message'.tr
-                      : 'hero_title'.tr,
-                  style: theme.textTheme.titleLarge
-                      ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  isPremium
-                      ? 'hero_premium_body'.tr
-                      : 'hero_body'.tr,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: Colors.white.withOpacity(0.9)),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    if (!isPremium)
-                      ElevatedButton(
-                        onPressed: onUpgrade,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.primaryDark,
-                        ),
-                        child: Text('upgrade_now'.tr),
-                      )
-                    else
-                      const Icon(Icons.workspace_premium, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Text(
-                      isPremium ? 'premium_active_message'.tr : 'premium_subtitle'.tr,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: Colors.white.withOpacity(0.8)),
+                if (!isPremium)
+                  ElevatedButton(
+                    onPressed: onUpgrade,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primaryDark,
                     ),
-                  ],
+                    child: Text('upgrade_now'.tr),
+                  )
+                else
+                  const Icon(Icons.workspace_premium, color: Colors.white),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    isPremium ? 'premium_active_message'.tr : 'premium_subtitle'.tr,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: Colors.white.withOpacity(0.8)),
+                  ),
                 ),
               ],
             ),
+          ],
+        );
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: AppColors.heroGradient,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withOpacity(0.35),
+                blurRadius: 22,
+                offset: const Offset(0, 14),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Container(
-            height: 96,
-            width: 72,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: const Icon(
-              Icons.description_outlined,
-              size: 40,
-              color: Colors.white,
-            ),
-          ),
-        ],
-      ),
+          child: isCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    content,
+                    const SizedBox(height: 12),
+                    Align(alignment: AlignmentDirectional.centerStart, child: trailingIcon),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Expanded(child: content),
+                    const SizedBox(width: 12),
+                    trailingIcon,
+                  ],
+                ),
+        );
+      },
     );
   }
 }
@@ -328,6 +345,10 @@ class _TemplateSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double cardWidth =
+        (screenWidth * 0.6).clamp(180.0, 260.0).toDouble();
+    final double listHeight = screenWidth < 360 ? 170.0 : 150.0;
     final templates = [
       (
         template: ResumeTemplate.minimal,
@@ -353,7 +374,7 @@ class _TemplateSelector extends StatelessWidget {
     ];
 
     return SizedBox(
-      height: 150,
+      height: listHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: templates.length,
@@ -366,7 +387,7 @@ class _TemplateSelector extends StatelessWidget {
             onTap: () => onTemplateSelected(item.template),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
-              width: 220,
+              width: cardWidth,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: theme.cardColor,
@@ -458,16 +479,31 @@ class _StatsGrid extends StatelessWidget {
       (_StatCardData(labelKey: 'projects', count: counts['projects'] ?? 0, icon: Icons.widgets_outlined)),
     ];
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: items
-          .map(
-            (item) => _StatCard(
-              data: item,
-            ),
-          )
-          .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final columns = constraints.maxWidth >= 900
+            ? 3
+            : constraints.maxWidth >= 640
+                ? 2
+                : 1;
+        final itemWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: items
+              .map(
+                (item) => SizedBox(
+                  width: itemWidth,
+                  child: _StatCard(
+                    data: item,
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
@@ -482,7 +518,7 @@ class _StatCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      width: MediaQuery.of(context).size.width / 2 - 26,
+      width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: theme.cardColor,
@@ -547,17 +583,29 @@ class _NavigationGrid extends StatelessWidget {
       _NavigationTile(title: 'settings', route: Routes.settings, icon: Icons.settings_outlined),
     ];
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: tiles
-          .map(
-            (tile) => SizedBox(
-              width: MediaQuery.of(context).size.width / 2 - 26,
-              child: tile,
-            ),
-          )
-          .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 12.0;
+        final columns = constraints.maxWidth >= 900
+            ? 3
+            : constraints.maxWidth >= 640
+                ? 2
+                : 1;
+        final itemWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: tiles
+              .map(
+                (tile) => SizedBox(
+                  width: itemWidth,
+                  child: tile,
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
