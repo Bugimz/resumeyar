@@ -25,7 +25,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 8,
+      version: 3,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -87,10 +87,8 @@ class DatabaseProvider {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             profileId INTEGER NOT NULL,
             name TEXT NOT NULL,
-            category TEXT NOT NULL,
-            levelValue INTEGER,
-            proficiency TEXT,
-            sortOrder INTEGER NOT NULL DEFAULT 0,
+            level TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'General',
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -157,133 +155,8 @@ class DatabaseProvider {
 
         if (oldVersion < 3) {
           await db.execute(
-              "ALTER TABLE resume_profiles ADD COLUMN jobTitle TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE resume_profiles ADD COLUMN location TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE resume_profiles ADD COLUMN portfolioUrl TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE resume_profiles ADD COLUMN linkedInUrl TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE resume_profiles ADD COLUMN githubUrl TEXT NOT NULL DEFAULT ''");
-        }
-
-        if (oldVersion < 4) {
-          await db.execute(
-              "ALTER TABLE work_experiences ADD COLUMN achievements TEXT NOT NULL DEFAULT '[]'");
-          await db.execute(
-              "ALTER TABLE work_experiences ADD COLUMN techTags TEXT NOT NULL DEFAULT '[]'");
-          await db.execute(
-              'ALTER TABLE work_experiences ADD COLUMN metric TEXT');
-        }
-
-        if (oldVersion < 5) {
-          await db.execute(
-              "ALTER TABLE skills ADD COLUMN category TEXT NOT NULL DEFAULT 'language'");
-          await db.execute('ALTER TABLE skills ADD COLUMN levelValue INTEGER');
-          await db.execute('ALTER TABLE skills ADD COLUMN proficiency TEXT');
-          await db.execute(
-              'ALTER TABLE skills ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0');
-
-          final legacySkills = await db.query('skills');
-          final Map<String, int> categoryCounts = {
-            for (final category in SkillCategory.values) category.name: 0
-          };
-
-          for (final skillRow in legacySkills) {
-            final legacyLevel = skillRow['level'] as String?;
-            int? parsedLevel;
-            SkillProficiency? parsedProficiency =
-                skillProficiencyFromString(legacyLevel);
-            final numeric = int.tryParse(legacyLevel ?? '');
-            if (numeric != null) {
-              parsedLevel = numeric.clamp(1, 5);
-              parsedProficiency = null;
-            }
-
-            final category = skillCategoryFromString(skillRow['category'] as String?);
-            final sortOrder = categoryCounts[category.name] ?? 0;
-            categoryCounts[category.name] = sortOrder + 1;
-
-            await db.update(
-              'skills',
-              {
-                'levelValue': parsedLevel,
-                'proficiency': parsedProficiency?.name,
-                'category': category.name,
-                'sortOrder': sortOrder,
-              },
-              where: 'id = ?',
-              whereArgs: [skillRow['id']],
-            );
-          }
-        }
-
-        if (oldVersion < 6) {
-          await db.execute('ALTER TABLE educations ADD COLUMN gpa REAL');
-          await db
-              .execute('ALTER TABLE educations ADD COLUMN showGpa INTEGER NOT NULL DEFAULT 0');
-          await db.execute(
-              "ALTER TABLE educations ADD COLUMN honors TEXT NOT NULL DEFAULT '[]'");
-          await db.execute(
-              "ALTER TABLE educations ADD COLUMN courses TEXT NOT NULL DEFAULT '[]'");
-          await db.execute(
-              'ALTER TABLE educations ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0');
-        }
-
-        if (oldVersion < 7) {
-          await db.execute("ALTER TABLE projects ADD COLUMN role TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE projects ADD COLUMN responsibilities TEXT NOT NULL DEFAULT '[]'");
-          await db
-              .execute("ALTER TABLE projects ADD COLUMN techTags TEXT NOT NULL DEFAULT '[]'");
-          await db.execute(
-              "ALTER TABLE projects ADD COLUMN demoLink TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE projects ADD COLUMN githubLink TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE projects ADD COLUMN liveLink TEXT NOT NULL DEFAULT ''");
-          await db.execute(
-              "ALTER TABLE projects ADD COLUMN thumbnailUrl TEXT NOT NULL DEFAULT ''");
-          await db
-              .execute("ALTER TABLE projects ADD COLUMN isFeatured INTEGER NOT NULL DEFAULT 0");
-        }
-
-        if (oldVersion < 8) {
-          await db.execute('''
-            CREATE TABLE certifications (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              profileId INTEGER NOT NULL,
-              name TEXT NOT NULL,
-              issuer TEXT NOT NULL,
-              issueDate TEXT NOT NULL,
-              credentialUrl TEXT NOT NULL DEFAULT '',
-              sortOrder INTEGER NOT NULL DEFAULT 0,
-              FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
-            )
-          ''');
-
-          await db.execute('''
-            CREATE TABLE languages (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              profileId INTEGER NOT NULL,
-              name TEXT NOT NULL,
-              level TEXT NOT NULL,
-              sortOrder INTEGER NOT NULL DEFAULT 0,
-              FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
-            )
-          ''');
-
-          await db.execute('''
-            CREATE TABLE interests (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              profileId INTEGER NOT NULL,
-              title TEXT NOT NULL,
-              details TEXT NOT NULL DEFAULT '',
-              sortOrder INTEGER NOT NULL DEFAULT 0,
-              FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
-            )
-          ''');
+            "ALTER TABLE skills ADD COLUMN category TEXT NOT NULL DEFAULT 'General'",
+          );
         }
       },
     );

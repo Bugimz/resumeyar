@@ -18,6 +18,8 @@ class _SkillViewState extends State<SkillView> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController profileIdController = TextEditingController(text: '1');
   final TextEditingController nameController = TextEditingController();
+  final TextEditingController levelController = TextEditingController();
+  final TextEditingController categoryController = TextEditingController(text: 'General');
   final Rxn<Skill> editingSkill = Rxn<Skill>();
   final Rx<SkillCategory> selectedCategory = SkillCategory.language.obs;
   final RxString levelMode = 'numeric'.obs;
@@ -30,16 +32,15 @@ class _SkillViewState extends State<SkillView> {
     profileIdController.dispose();
     nameController.dispose();
     levelController.dispose();
+    categoryController.dispose();
     super.dispose();
   }
 
   void _resetForm() {
     editingSkill.value = null;
     nameController.clear();
-    selectedCategory.value = SkillCategory.language;
-    levelMode.value = 'numeric';
-    numericLevel.value = 3;
-    selectedProficiency.value = null;
+    levelController.clear();
+    categoryController.text = 'General';
     isFormValid.value = false;
   }
 
@@ -82,10 +83,8 @@ class _SkillViewState extends State<SkillView> {
       id: editingSkill.value?.id,
       profileId: profileId,
       name: nameController.text,
-      category: selectedCategory.value,
-      levelValue: levelMode.value == 'numeric' ? numericLevel.value : null,
-      proficiency: levelMode.value == 'proficiency' ? selectedProficiency.value : null,
-      sortOrder: editingSkill.value?.sortOrder ?? -1,
+      level: levelController.text,
+      category: categoryController.text,
     );
 
     if (editingSkill.value == null) {
@@ -158,6 +157,16 @@ class _SkillViewState extends State<SkillView> {
                           ),
                           SizedBox(
                             width: fieldWidth,
+                            child: TextFormField(
+                              controller: categoryController,
+                              decoration:
+                                  InputDecoration(labelText: 'category'.tr),
+                              validator: FormValidators.requiredField,
+                              onChanged: (_) => _updateFormValidity(),
+                            ),
+                          ),
+                          SizedBox(
+                            width: fieldWidth,
                             child: Wrap(
                               spacing: 12,
                               runSpacing: 8,
@@ -221,6 +230,7 @@ class _SkillViewState extends State<SkillView> {
                                           skill.profileId.toString();
                                       nameController.text = skill.name;
                                       levelController.text = skill.level;
+                                      categoryController.text = skill.category;
                                       _updateFormValidity();
                                     },
                                   ),

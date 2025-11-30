@@ -97,23 +97,10 @@ class BackupService {
       'endDate',
       'description',
     ]);
-    final certificationMaps = _validateMapList(data['certifications'] ?? [], const [
-      'profileId',
-      'name',
-      'issuer',
-      'issueDate',
-    ]);
-    final languageMaps = _validateMapList(data['languages'] ?? [], const [
-      'profileId',
-      'name',
-      'level',
-    ]);
-    final interestMaps = _validateMapList(data['interests'] ?? [], const [
-      'profileId',
-      'title',
-    ]);
-    final skillMaps =
-        _validateMapList(data['skills'], const ['profileId', 'name']);
+    final skillMaps = _validateMapList(
+      data['skills'],
+      const ['profileId', 'name', 'level', 'category'],
+    );
     final projectMaps = _validateMapList(data['projects'], const [
       'profileId',
       'title',
@@ -256,12 +243,8 @@ class BackupService {
         final skill = Skill(
           profileId: profileId,
           name: _requireString(map, 'name'),
-          category: skillCategoryFromString(
-              _optionalString(map, 'category') ?? SkillCategory.language.name),
-          levelValue: _optionalInt(map, 'levelValue') ?? int.tryParse(_optionalString(map, 'level') ?? ''),
-          proficiency:
-              skillProficiencyFromString(_optionalString(map, 'proficiency')),
-          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
+          level: _requireString(map, 'level'),
+          category: _requireString(map, 'category'),
         );
 
         await txn.insert(

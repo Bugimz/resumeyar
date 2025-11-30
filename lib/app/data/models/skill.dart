@@ -34,19 +34,15 @@ class Skill {
   final int? id;
   final int profileId;
   final String name;
-  final SkillCategory category;
-  final int? levelValue;
-  final SkillProficiency? proficiency;
-  final int sortOrder;
+  final String level;
+  final String category;
 
   const Skill({
     this.id,
     required this.profileId,
     required this.name,
+    required this.level,
     required this.category,
-    this.levelValue,
-    this.proficiency,
-    this.sortOrder = 0,
   });
 
   /// ایجاد نمونه جدید با شناسه پایگاه‌داده بدون اتکا به copyWith
@@ -55,6 +51,7 @@ class Skill {
         profileId: profileId,
         name: name,
         level: level,
+        category: category,
       );
 
   Map<String, dynamic> toMap({bool includeId = true}) {
@@ -62,10 +59,8 @@ class Skill {
       if (includeId) 'id': id,
       'profileId': profileId,
       'name': name,
-      'category': category.name,
-      'levelValue': levelValue,
-      'proficiency': proficiency?.name,
-      'sortOrder': sortOrder,
+      'level': level,
+      'category': category,
     };
   }
 
@@ -88,10 +83,8 @@ class Skill {
       id: map['id'] as int?,
       profileId: map['profileId'] as int,
       name: map['name'] as String,
-      category: skillCategoryFromString(map['category'] as String?),
-      levelValue: mappedLevel,
-      proficiency: mappedProficiency,
-      sortOrder: map['sortOrder'] as int? ?? 0,
+      level: map['level'] as String,
+      category: (map['category'] as String?) ?? 'General',
     );
   }
 
