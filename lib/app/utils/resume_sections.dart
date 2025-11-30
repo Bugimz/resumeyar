@@ -6,6 +6,9 @@ enum ResumeSection {
   education,
   skills,
   projects,
+  certifications,
+  languages,
+  interests,
 }
 
 extension ResumeSectionX on ResumeSection {
@@ -21,6 +24,12 @@ extension ResumeSectionX on ResumeSection {
         return 'skills';
       case ResumeSection.projects:
         return 'projects';
+      case ResumeSection.certifications:
+        return 'certifications';
+      case ResumeSection.languages:
+        return 'languages';
+      case ResumeSection.interests:
+        return 'interests';
     }
   }
 
