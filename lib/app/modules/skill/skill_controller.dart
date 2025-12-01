@@ -19,7 +19,11 @@ class SkillController extends GetxController {
 
   Future<void> load(int profileId) async {
     lastProfileId = profileId;
-    skills.assignAll(await repository.getByProfile(profileId));
+    try {
+      skills.assignAll(await repository.getByProfile(profileId));
+    } catch (error) {
+      Get.snackbar('خطا', 'بارگذاری مهارت‌ها انجام نشد: $error');
+    }
   }
 
   Future<void> save(Skill skill) async {
@@ -28,6 +32,10 @@ class SkillController extends GetxController {
   }
 
   Future<void> updateSkill(Skill skill) async {
+    if (skill.id == null) {
+      throw ArgumentError('شناسه مهارت برای ویرایش الزامی است');
+    }
+
     await repository.update(skill);
     await load(skill.profileId);
   }

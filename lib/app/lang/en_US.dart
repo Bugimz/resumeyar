@@ -81,6 +81,7 @@ const Map<String, String> enUS = {
   'no_education_history': 'No education history found.',
   'skill_name_label': 'Skill Name',
   'level_label': 'Level',
+  'category': 'Category',
   'no_skills': 'No skills found.',
   'title_label': 'Title',
   'link_label': 'Link',
