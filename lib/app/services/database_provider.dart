@@ -25,7 +25,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 4,
+      version: 5,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -89,6 +89,7 @@ class DatabaseProvider {
             name TEXT NOT NULL,
             level TEXT NOT NULL,
             category TEXT NOT NULL DEFAULT 'General',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -211,6 +212,15 @@ class DatabaseProvider {
               credentialUrl TEXT NOT NULL
             )
           ''');
+        }
+
+        if (oldVersion < 5) {
+          await db.execute(
+            "ALTER TABLE skills ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0",
+          );
+          await db.execute(
+            "UPDATE skills SET sortOrder = COALESCE(id, 0) WHERE sortOrder = 0",
+          );
         }
       },
     );

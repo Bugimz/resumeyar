@@ -85,6 +85,7 @@ class _SkillViewState extends State<SkillView> {
       name: nameController.text,
       level: levelController.text,
       category: categoryController.text,
+      sortOrder: editingSkill.value?.sortOrder ?? controller.skills.length,
     );
 
     if (editingSkill.value == null) {

@@ -26,7 +26,7 @@ class SkillRepository {
       tableName,
       where: 'profileId = ?',
       whereArgs: [profileId],
-      orderBy: 'category ASC, sortOrder ASC, name ASC',
+      orderBy: 'sortOrder ASC, id ASC',
     );
     return result.map((map) => Skill.fromMap(map)).toList();
   }
