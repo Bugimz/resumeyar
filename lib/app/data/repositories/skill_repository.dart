@@ -22,7 +22,12 @@ class SkillRepository {
 
   Future<List<Skill>> getByProfile(int profileId) async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName, where: 'profileId = ?', whereArgs: [profileId]);
+    final result = await db.query(
+      tableName,
+      where: 'profileId = ?',
+      whereArgs: [profileId],
+      orderBy: 'sortOrder ASC, id ASC',
+    );
     return result.map((map) => Skill.fromMap(map)).toList();
   }
 
