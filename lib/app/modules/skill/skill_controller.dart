@@ -60,7 +60,6 @@ class SkillController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    load(1);
   }
 
   Future<void> load(int profileId) async {
@@ -75,7 +74,7 @@ class SkillController extends GetxController {
   }
 
   Future<void> save(Skill skill) async {
-    final nextOrder = _nextSortOrder();
+    final nextOrder = await _nextSortOrder(skill.profileId);
     await repository.create(
       Skill(
         profileId: skill.profileId,
@@ -111,16 +110,24 @@ class SkillController extends GetxController {
     return index >= 0 ? index : _categoryPriority.length;
   }
 
-  int _nextSortOrder() {
-    if (skills.isEmpty) {
+  Future<int> _nextSortOrder(int profileId) async {
+    if (skills.isNotEmpty && lastProfileId == profileId) {
+      return _maxSortOrder(skills) + 1;
+    }
+
+    final existing = await repository.getByProfile(profileId);
+    if (existing.isEmpty) {
       return 0;
     }
 
-    return skills.map((skill) => skill.sortOrder).fold<int>(0, (prev, element) {
-      if (element > prev) return element;
-      return prev;
-    }) + 1;
+    return _maxSortOrder(existing) + 1;
   }
+
+  int _maxSortOrder(List<Skill> source) =>
+      source.map((skill) => skill.sortOrder).fold<int>(0, (prev, element) {
+        if (element > prev) return element;
+        return prev;
+      });
 
   Future<void> delete(int id) async {
     await repository.delete(id);
