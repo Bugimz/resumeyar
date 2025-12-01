@@ -66,8 +66,20 @@ class SkillController extends GetxController {
     lastProfileId = profileId;
     try {
       final loaded = await repository.getByProfile(profileId);
-      loaded.sort(_compareSkills);
-      skills.assignAll(loaded);
+      final normalized = loaded
+          .map(
+            (skill) => Skill(
+              id: skill.id,
+              profileId: skill.profileId,
+              name: skill.name,
+              level: skill.level,
+              category: _normalizeCategory(skill.category),
+              sortOrder: skill.sortOrder,
+            ),
+          )
+          .toList();
+      normalized.sort(_compareSkills);
+      skills.assignAll(normalized);
     } catch (error) {
       Get.snackbar('خطا', 'بارگذاری مهارت‌ها انجام نشد: $error');
     }
@@ -80,7 +92,7 @@ class SkillController extends GetxController {
         profileId: skill.profileId,
         name: skill.name,
         level: skill.level,
-        category: skill.category,
+        category: _normalizeCategory(skill.category),
         sortOrder: nextOrder,
       ),
     );
@@ -92,7 +104,16 @@ class SkillController extends GetxController {
       throw ArgumentError('شناسه مهارت برای ویرایش الزامی است');
     }
 
-    await repository.update(skill);
+    await repository.update(
+      Skill(
+        id: skill.id,
+        profileId: skill.profileId,
+        name: skill.name,
+        level: skill.level,
+        category: _normalizeCategory(skill.category),
+        sortOrder: skill.sortOrder,
+      ),
+    );
     await load(skill.profileId);
   }
 
@@ -103,6 +124,11 @@ class SkillController extends GetxController {
     }
 
     return a.sortOrder.compareTo(b.sortOrder);
+  }
+
+  String _normalizeCategory(String category) {
+    final trimmed = category.trim();
+    return trimmed.isEmpty ? 'General' : trimmed;
   }
 
   int _categoryIndex(String category) {
