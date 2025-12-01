@@ -97,11 +97,33 @@ class BackupService {
       'endDate',
       'description',
     ]);
+
+    // مدل Certification: title, issuer, issueDate, credentialUrl (بدون profileId)
+    final certificationMaps =
+        _validateMapList(data['certifications'] ?? [], const [
+      'title',
+      'issuer',
+      'issueDate',
+    ]);
+
+    // مدل Language: name, proficiency (بدون profileId و level و sortOrder)
+    final languageMaps = _validateMapList(data['languages'] ?? [], const [
+      'name',
+      'proficiency',
+    ]);
+
+    // مدل Interest: name, description (بدون profileId و title و details و sortOrder)
+    final interestMaps = _validateMapList(data['interests'] ?? [], const [
+      'name',
+      'description',
+    ]);
+
     final skillMaps = _validateMapList(
-      data['skills'],
+      data['skills'] ?? [],
       const ['profileId', 'name', 'level', 'category'],
     );
-    final projectMaps = _validateMapList(data['projects'], const [
+
+    final projectMaps = _validateMapList(data['projects'] ?? [], const [
       'profileId',
       'title',
       'description',
@@ -192,14 +214,12 @@ class BackupService {
       }
 
       for (final map in certificationMaps) {
-        final profileId = _resolveProfileId(map, profileIdMap);
+        // مدل Certification: فقط title, issuer, issueDate, credentialUrl
         final certification = Certification(
-          profileId: profileId,
-          name: _requireString(map, 'name'),
+          title: _requireString(map, 'title'),
           issuer: _requireString(map, 'issuer'),
           issueDate: _requireString(map, 'issueDate'),
           credentialUrl: _optionalString(map, 'credentialUrl') ?? '',
-          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
         );
 
         await txn.insert(
@@ -209,12 +229,10 @@ class BackupService {
       }
 
       for (final map in languageMaps) {
-        final profileId = _resolveProfileId(map, profileIdMap);
+        // مدل Language: فقط name, proficiency (بدون profileId, level, sortOrder)
         final language = Language(
-          profileId: profileId,
           name: _requireString(map, 'name'),
-          level: _requireString(map, 'level'),
-          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
+          proficiency: _requireString(map, 'proficiency'),
         );
 
         await txn.insert(
@@ -224,12 +242,10 @@ class BackupService {
       }
 
       for (final map in interestMaps) {
-        final profileId = _resolveProfileId(map, profileIdMap);
+        // مدل Interest: فقط name, description (بدون profileId, title, details, sortOrder)
         final interest = Interest(
-          profileId: profileId,
-          title: _requireString(map, 'title'),
-          details: _optionalString(map, 'details') ?? '',
-          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
+          name: _requireString(map, 'name'),
+          description: _optionalString(map, 'description') ?? '',
         );
 
         await txn.insert(
@@ -245,6 +261,7 @@ class BackupService {
           name: _requireString(map, 'name'),
           level: _requireString(map, 'level'),
           category: _requireString(map, 'category'),
+          sortOrder: _optionalInt(map, 'sortOrder') ?? 0,
         );
 
         await txn.insert(

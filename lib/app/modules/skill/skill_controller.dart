@@ -21,15 +21,14 @@ class SkillController extends GetxController {
   final skills = <Skill>[].obs;
   int? lastProfileId;
 
-  int _nextSortOrder(SkillCategory category) {
-    final categorySkills = skills.where((skill) => skill.category == category);
-    if (categorySkills.isEmpty) {
-      return 0;
-    }
-
-    return categorySkills.map((skill) => skill.sortOrder).reduce((a, b) => a > b ? a : b) +
-        1;
-  }
+  // حذف متد تکراری - این متد قبلاً در خط 132 تعریف شده
+  // int _nextSortOrder(SkillCategory category) {
+  //   final categorySkills = skills.where((skill) => skill.category == category);
+  //   if (categorySkills.isEmpty) {
+  //     return 0;
+  //   }
+  //   return categorySkills.map((skill) => skill.sortOrder).reduce((a, b) => a > b ? a : b) + 1;
+  // }
 
   Skill? _skillById(int? id) {
     if (id == null) {
@@ -47,8 +46,9 @@ class SkillController extends GetxController {
   List<Skill> _sortedSkills(List<Skill> items) {
     final sorted = [...items];
     sorted.sort((a, b) {
+      // تبدیل String به index برای مقایسه
       final categoryCompare =
-          SkillCategory.values.indexOf(a.category) - SkillCategory.values.indexOf(b.category);
+          _categoryIndex(a.category) - _categoryIndex(b.category);
       if (categoryCompare != 0) {
         return categoryCompare;
       }
@@ -118,7 +118,8 @@ class SkillController extends GetxController {
   }
 
   int _compareSkills(Skill a, Skill b) {
-    final categoryDiff = _categoryIndex(a.category) - _categoryIndex(b.category);
+    final categoryDiff =
+        _categoryIndex(a.category) - _categoryIndex(b.category);
     if (categoryDiff != 0) {
       return categoryDiff;
     }
@@ -162,7 +163,8 @@ class SkillController extends GetxController {
     }
   }
 
-  Future<void> reorderWithinCategory({required Skill dragged, required Skill target}) async {
+  Future<void> reorderWithinCategory(
+      {required Skill dragged, required Skill target}) async {
     if (dragged.category != target.category) {
       return;
     }
@@ -172,8 +174,10 @@ class SkillController extends GetxController {
         .toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-    final oldIndex = categorySkills.indexWhere((skill) => skill.id == dragged.id);
-    final newIndex = categorySkills.indexWhere((skill) => skill.id == target.id);
+    final oldIndex =
+        categorySkills.indexWhere((skill) => skill.id == dragged.id);
+    final newIndex =
+        categorySkills.indexWhere((skill) => skill.id == target.id);
 
     if (oldIndex == -1 || newIndex == -1 || oldIndex == newIndex) {
       return;
@@ -184,11 +188,22 @@ class SkillController extends GetxController {
 
     final updatedCategorySkills = <Skill>[];
     for (var i = 0; i < categorySkills.length; i++) {
-      updatedCategorySkills.add(categorySkills[i].copyWith(sortOrder: i));
+      // استفاده از constructor به جای copyWith
+      updatedCategorySkills.add(
+        Skill(
+          id: categorySkills[i].id,
+          profileId: categorySkills[i].profileId,
+          name: categorySkills[i].name,
+          level: categorySkills[i].level,
+          category: categorySkills[i].category,
+          sortOrder: i,
+        ),
+      );
     }
 
-    final otherSkills =
-        skills.where((skill) => skill.category != dragged.category).toList(growable: true);
+    final otherSkills = skills
+        .where((skill) => skill.category != dragged.category)
+        .toList(growable: true);
     skills.assignAll(_sortedSkills([...otherSkills, ...updatedCategorySkills]));
 
     await repository.updateMany(updatedCategorySkills);
