@@ -8,6 +8,16 @@ class SkillController extends GetxController {
 
   final SkillRepository repository;
 
+  // ترتیب دلخواه برای دسته‌بندی‌ها تا مهارت‌ها همیشه با نظم یکسانی نمایش داده شوند
+  static const List<String> _categoryPriority = <String>[
+    'General',
+    'Languages',
+    'Frameworks',
+    'Tools',
+    'Databases',
+    'Other',
+  ];
+
   final skills = <Skill>[].obs;
   int? lastProfileId;
 
@@ -56,7 +66,9 @@ class SkillController extends GetxController {
   Future<void> load(int profileId) async {
     lastProfileId = profileId;
     try {
-      skills.assignAll(await repository.getByProfile(profileId));
+      final loaded = await repository.getByProfile(profileId);
+      loaded.sort(_compareSkills);
+      skills.assignAll(loaded);
     } catch (error) {
       Get.snackbar('خطا', 'بارگذاری مهارت‌ها انجام نشد: $error');
     }
@@ -83,6 +95,20 @@ class SkillController extends GetxController {
 
     await repository.update(skill);
     await load(skill.profileId);
+  }
+
+  int _compareSkills(Skill a, Skill b) {
+    final categoryDiff = _categoryIndex(a.category) - _categoryIndex(b.category);
+    if (categoryDiff != 0) {
+      return categoryDiff;
+    }
+
+    return a.sortOrder.compareTo(b.sortOrder);
+  }
+
+  int _categoryIndex(String category) {
+    final index = _categoryPriority.indexOf(category);
+    return index >= 0 ? index : _categoryPriority.length;
   }
 
   int _nextSortOrder() {
