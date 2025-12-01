@@ -22,13 +22,18 @@ class ProjectRepository {
 
   Future<List<Project>> getByProfile(int profileId) async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName, where: 'profileId = ?', whereArgs: [profileId]);
+    final result = await db.query(
+      tableName,
+      where: 'profileId = ?',
+      whereArgs: [profileId],
+      orderBy: 'isFeatured DESC, id DESC',
+    );
     return result.map((map) => Project.fromMap(map)).toList();
   }
 
   Future<List<Project>> getAll() async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName);
+    final result = await db.query(tableName, orderBy: 'isFeatured DESC, id DESC');
     return result.map((map) => Project.fromMap(map)).toList();
   }
 

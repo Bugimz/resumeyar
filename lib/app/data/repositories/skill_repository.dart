@@ -33,7 +33,7 @@ class SkillRepository {
 
   Future<List<Skill>> getAll() async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName);
+    final result = await db.query(tableName, orderBy: 'category ASC, sortOrder ASC');
     return result.map((map) => Skill.fromMap(map)).toList();
   }
 
@@ -50,5 +50,19 @@ class SkillRepository {
   Future<int> delete(int id) async {
     final db = await DatabaseProvider.instance.database;
     return db.delete(tableName, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> updateMany(List<Skill> skills) async {
+    final db = await DatabaseProvider.instance.database;
+    final batch = db.batch();
+    for (final skill in skills) {
+      batch.update(
+        tableName,
+        skill.toMap(),
+        where: 'id = ?',
+        whereArgs: [skill.id],
+      );
+    }
+    await batch.commit(noResult: true);
   }
 }

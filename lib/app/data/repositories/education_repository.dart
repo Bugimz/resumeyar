@@ -22,13 +22,18 @@ class EducationRepository {
 
   Future<List<Education>> getByProfile(int profileId) async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName, where: 'profileId = ?', whereArgs: [profileId]);
+    final result = await db.query(
+      tableName,
+      where: 'profileId = ?',
+      whereArgs: [profileId],
+      orderBy: 'school ASC, sortOrder ASC, startDate DESC',
+    );
     return result.map((map) => Education.fromMap(map)).toList();
   }
 
   Future<List<Education>> getAll() async {
     final db = await DatabaseProvider.instance.database;
-    final result = await db.query(tableName);
+    final result = await db.query(tableName, orderBy: 'school ASC, sortOrder ASC, startDate DESC');
     return result.map((map) => Education.fromMap(map)).toList();
   }
 

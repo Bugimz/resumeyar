@@ -32,6 +32,17 @@ class EducationController extends GetxController {
     await load(education.profileId);
   }
 
+  Future<void> updateSortOrder(Education education, int delta) async {
+    if (education.id == null) {
+      return;
+    }
+
+    final newOrder = (education.sortOrder + delta).clamp(0, 1000000).toInt();
+    final updated = education.copyWith(sortOrder: newOrder);
+    await repository.update(updated);
+    await load(updated.profileId);
+  }
+
   Future<void> delete(int id) async {
     await repository.delete(id);
     if (lastProfileId != null) {
