@@ -23,7 +23,7 @@ class DatabaseProvider {
 
     return openDatabase(
       path,
-      version: 2,
+      version: 5,
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -73,6 +73,8 @@ class DatabaseProvider {
             profileId INTEGER NOT NULL,
             name TEXT NOT NULL,
             level TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'General',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -87,11 +89,80 @@ class DatabaseProvider {
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
+
+        await db.execute('''
+          CREATE TABLE languages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            proficiency TEXT NOT NULL
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE interests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE certifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            issuer TEXT NOT NULL,
+            issueDate TEXT NOT NULL,
+            credentialUrl TEXT NOT NULL
+          )
+        ''');
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) {
           await db.execute('ALTER TABLE resume_profiles ADD COLUMN imagePath TEXT');
           await db.execute('ALTER TABLE resume_profiles ADD COLUMN signaturePath TEXT');
+        }
+
+        if (oldVersion < 3) {
+          await db.execute(
+            "ALTER TABLE skills ADD COLUMN category TEXT NOT NULL DEFAULT 'General'",
+          );
+        }
+
+        if (oldVersion < 4) {
+          await db.execute('''
+            CREATE TABLE languages (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              proficiency TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE interests (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              description TEXT NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE certifications (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              title TEXT NOT NULL,
+              issuer TEXT NOT NULL,
+              issueDate TEXT NOT NULL,
+              credentialUrl TEXT NOT NULL
+            )
+          ''');
+        }
+
+        if (oldVersion < 5) {
+          await db.execute(
+            "ALTER TABLE skills ADD COLUMN sortOrder INTEGER NOT NULL DEFAULT 0",
+          );
+          await db.execute(
+            "UPDATE skills SET sortOrder = COALESCE(id, 0) WHERE sortOrder = 0",
+          );
         }
       },
     );

@@ -19,17 +19,45 @@ class SkillController extends GetxController {
 
   Future<void> load(int profileId) async {
     lastProfileId = profileId;
-    skills.assignAll(await repository.getByProfile(profileId));
+    try {
+      skills.assignAll(await repository.getByProfile(profileId));
+    } catch (error) {
+      Get.snackbar('خطا', 'بارگذاری مهارت‌ها انجام نشد: $error');
+    }
   }
 
   Future<void> save(Skill skill) async {
-    await repository.create(skill);
+    final nextOrder = _nextSortOrder();
+    await repository.create(
+      Skill(
+        profileId: skill.profileId,
+        name: skill.name,
+        level: skill.level,
+        category: skill.category,
+        sortOrder: nextOrder,
+      ),
+    );
     await load(skill.profileId);
   }
 
   Future<void> updateSkill(Skill skill) async {
+    if (skill.id == null) {
+      throw ArgumentError('شناسه مهارت برای ویرایش الزامی است');
+    }
+
     await repository.update(skill);
     await load(skill.profileId);
+  }
+
+  int _nextSortOrder() {
+    if (skills.isEmpty) {
+      return 0;
+    }
+
+    return skills.map((skill) => skill.sortOrder).fold<int>(0, (prev, element) {
+      if (element > prev) return element;
+      return prev;
+    }) + 1;
   }
 
   Future<void> delete(int id) async {
