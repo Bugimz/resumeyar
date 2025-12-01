@@ -1,6 +1,8 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+import '../data/models/skill.dart';
+
 class DatabaseProvider {
   DatabaseProvider._internal();
 
@@ -32,9 +34,14 @@ class DatabaseProvider {
           CREATE TABLE resume_profiles (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fullName TEXT NOT NULL,
+            jobTitle TEXT NOT NULL DEFAULT '',
+            location TEXT NOT NULL DEFAULT '',
             email TEXT NOT NULL,
             phone TEXT NOT NULL,
             summary TEXT NOT NULL,
+            portfolioUrl TEXT NOT NULL DEFAULT '',
+            linkedInUrl TEXT NOT NULL DEFAULT '',
+            githubUrl TEXT NOT NULL DEFAULT '',
             imagePath TEXT,
             signaturePath TEXT
           )
@@ -49,6 +56,9 @@ class DatabaseProvider {
             startDate TEXT NOT NULL,
             endDate TEXT NOT NULL,
             description TEXT NOT NULL,
+            achievements TEXT NOT NULL DEFAULT '[]',
+            techTags TEXT NOT NULL DEFAULT '[]',
+            metric TEXT,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -63,6 +73,11 @@ class DatabaseProvider {
             startDate TEXT NOT NULL,
             endDate TEXT NOT NULL,
             description TEXT NOT NULL,
+            gpa REAL,
+            showGpa INTEGER NOT NULL DEFAULT 0,
+            honors TEXT NOT NULL DEFAULT '[]',
+            courses TEXT NOT NULL DEFAULT '[]',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
@@ -86,6 +101,49 @@ class DatabaseProvider {
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             link TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT '',
+            responsibilities TEXT NOT NULL DEFAULT '[]',
+            techTags TEXT NOT NULL DEFAULT '[]',
+            demoLink TEXT NOT NULL DEFAULT '',
+            githubLink TEXT NOT NULL DEFAULT '',
+            liveLink TEXT NOT NULL DEFAULT '',
+            thumbnailUrl TEXT NOT NULL DEFAULT '',
+            isFeatured INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE certifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profileId INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            issuer TEXT NOT NULL,
+            issueDate TEXT NOT NULL,
+            credentialUrl TEXT NOT NULL DEFAULT '',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE languages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profileId INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            level TEXT NOT NULL,
+            sortOrder INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE interests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profileId INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            details TEXT NOT NULL DEFAULT '',
+            sortOrder INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY(profileId) REFERENCES resume_profiles(id) ON DELETE CASCADE
           )
         ''');
