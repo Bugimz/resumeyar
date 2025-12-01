@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf_google_fonts/pdf_google_fonts.dart';
 import 'package:printing/printing.dart';
 
 import '../data/models/education.dart';
@@ -63,37 +64,59 @@ class PdfService {
       ),
     );
 
+    final defaultTextStyle = pw.TextStyle(
+      color: PdfColors.black,
+      fontSize: 11.5,
+    );
+
     pdf.addPage(
       pw.MultiPage(
         pageTheme: pageTheme,
-        build: (context) => switch (template) {
-          ResumeTemplate.minimal => _buildMinimalTemplate(
-              profile,
-              workExperiences,
-              educations,
-              skills,
-              projects,
-              isRtl,
-              sectionOrder,
+        build: (context) {
+          List<pw.Widget> children;
+
+          switch (template) {
+            case ResumeTemplate.minimal:
+              children = _buildMinimalTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              );
+              break;
+            case ResumeTemplate.modern:
+              children = _buildModernTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              );
+              break;
+            case ResumeTemplate.elegant:
+              children = _buildElegantTemplate(
+                profile,
+                workExperiences,
+                educations,
+                skills,
+                projects,
+                isRtl,
+                sectionOrder,
+              );
+              break;
+          }
+
+          return [
+            pw.DefaultTextStyle.merge(
+              style: defaultTextStyle,
+              child: pw.Column(children: children),
             ),
-          ResumeTemplate.modern => _buildModernTemplate(
-              profile,
-              workExperiences,
-              educations,
-              skills,
-              projects,
-              isRtl,
-              sectionOrder,
-            ),
-          ResumeTemplate.elegant => _buildElegantTemplate(
-              profile,
-              workExperiences,
-              educations,
-              skills,
-              projects,
-              isRtl,
-              sectionOrder,
-            ),
+          ];
         },
       ),
     );
