@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../data/models/resume_profile.dart';
 import '../../utils/validators.dart';
+import '../../utils/widgets/section_card.dart';
 import 'profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -119,31 +120,9 @@ class ProfileView extends GetView<ProfileController> {
     previewSummary.value = summaryController.text;
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    FormFieldValidator<String>? validator,
-    int maxLines = 1,
-  }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label),
-      validator: validator,
-      maxLines: maxLines,
-      onChanged: (_) => _updateFormValidity(),
-    );
-  }
-
-  Widget _buildChip({required IconData icon, required String text}) {
-    return Chip(
-      avatar: Icon(icon, size: 16),
-      label: Text(text),
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('profiles_title'.tr),
@@ -163,186 +142,273 @@ class ProfileView extends GetView<ProfileController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Form(
-                      key: _formKey,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      child: Wrap(
-                        spacing: 16,
-                        runSpacing: 12,
-                        children: [
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: fullNameController,
-                              decoration:
-                                  InputDecoration(labelText: 'full_name_label'.tr),
-                              validator: FormValidators.requiredField,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: emailController,
-                              decoration:
-                                  InputDecoration(labelText: 'email_label'.tr),
-                              validator: FormValidators.email,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: phoneController,
-                              decoration:
-                                  InputDecoration(labelText: 'phone_label'.tr),
-                              validator: FormValidators.requiredField,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: summaryController,
-                              decoration:
-                                  InputDecoration(labelText: 'summary_label'.tr),
-                              validator: FormValidators.requiredField,
-                              maxLines: 3,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: Row(
-                              children: [
-                                ElevatedButton.icon(
-                                  onPressed: _pickImage,
-                                  icon: const Icon(Icons.image),
-                                  label: Text('select_image'.tr),
+                    SectionCard(
+                      title: 'profiles_title'.tr,
+                      subtitle: 'profile_details_subtitle'.tr,
+                      child: Form(
+                        key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 12,
+                          children: [
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: fullNameController,
+                                decoration: InputDecoration(
+                                  labelText: 'full_name_label'.tr,
+                                  prefixIcon: const Icon(Icons.person_outline),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Obx(() {
-                                    final path = imagePath.value;
-                                    if (path == null || path.isEmpty) {
-                                      return Text('no_image_selected'.tr);
-                                    }
-                                    return Row(
-                                      children: [
-                                        Container(
-                                          width: 48,
-                                          height: 48,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(
-                                                color: Colors.grey.shade300),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: jobTitleController,
+                                decoration: InputDecoration(
+                                  labelText: 'job_title_label'.tr,
+                                  prefixIcon: const Icon(Icons.work_outline),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: locationController,
+                                decoration: InputDecoration(
+                                  labelText: 'location_label'.tr,
+                                  prefixIcon: const Icon(Icons.place_outlined),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: emailController,
+                                decoration: InputDecoration(
+                                  labelText: 'email_label'.tr,
+                                  prefixIcon: const Icon(Icons.mail_outline),
+                                ),
+                                validator: FormValidators.email,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: phoneController,
+                                decoration: InputDecoration(
+                                  labelText: 'phone_label'.tr,
+                                  prefixIcon: const Icon(Icons.phone_outlined),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: portfolioController,
+                                decoration: InputDecoration(
+                                  labelText: 'portfolio_url_label'.tr,
+                                  prefixIcon: const Icon(Icons.public),
+                                ),
+                                validator: FormValidators.url,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                            width: fieldWidth,
+                            child: TextFormField(
+                              controller: linkedInController,
+                              decoration: InputDecoration(
+                                  labelText: 'linkedin_url_label'.tr,
+                                  prefixIcon: const Icon(Icons.link_outlined),
+                                ),
+                                validator: FormValidators.url,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: githubController,
+                                decoration: InputDecoration(
+                                  labelText: 'github_url_label'.tr,
+                                  prefixIcon: const Icon(Icons.code_outlined),
+                                ),
+                                validator: FormValidators.url,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: summaryController,
+                                decoration: InputDecoration(
+                                  labelText: 'summary_label'.tr,
+                                  prefixIcon: const Icon(Icons.notes_outlined),
+                                ),
+                                validator: FormValidators.requiredField,
+                                maxLines: 3,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: Row(
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: _pickImage,
+                                    icon: const Icon(Icons.image),
+                                    label: Text('select_image'.tr),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Obx(() {
+                                      final path = imagePath.value;
+                                      if (path == null || path.isEmpty) {
+                                        return Text(
+                                          'no_image_selected'.tr,
+                                          style: theme.textTheme.bodySmall,
+                                        );
+                                      }
+                                      return Row(
+                                        children: [
+                                          Container(
+                                            width: 48,
+                                            height: 48,
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                  color: Colors.grey.shade300),
+                                            ),
+                                            clipBehavior: Clip.antiAlias,
+                                            child: Image.file(
+                                              File(path),
+                                              fit: BoxFit.cover,
+                                            ),
                                           ),
-                                          clipBehavior: Clip.antiAlias,
-                                          child: Image.file(
-                                            File(path),
-                                            fit: BoxFit.cover,
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              path,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                           ),
+                                        ],
+                                      );
+                                    }),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                children: [
+                                  Obx(() => ElevatedButton.icon(
+                                        onPressed:
+                                            isFormValid.value ? _submit : null,
+                                        icon: Icon(editingProfile.value == null
+                                            ? Icons.save_outlined
+                                            : Icons.check_circle_outline),
+                                        label: Text(
+                                          editingProfile.value == null
+                                              ? 'save'.tr
+                                              : 'update'.tr,
                                         ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            path,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  }),
-                                ),
-                              ],
+                                      )),
+                                  OutlinedButton.icon(
+                                    onPressed: _resetForm,
+                                    icon: const Icon(Icons.refresh),
+                                    label: Text('clear'.tr),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 8,
-                              children: [
-                                Obx(() => ElevatedButton(
-                                      onPressed:
-                                          isFormValid.value ? _submit : null,
-                                      child: Text(
-                                        editingProfile.value == null
-                                            ? 'save'.tr
-                                            : 'update'.tr,
-                                      ),
-                                    )),
-                                TextButton(
-                                  onPressed: _resetForm,
-                                  child: Text('clear'.tr),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'profiles_title'.tr,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Obx(() {
-                      final profiles = controller.profiles;
+                    SectionCard(
+                      title: 'profiles_title'.tr,
+                      subtitle: 'profiles_subtitle'.tr,
+                      child: Obx(() {
+                        final profiles = controller.profiles;
 
-                      if (controller.isLoading.isTrue) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
+                        if (controller.isLoading.isTrue) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 24),
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
 
-                      if (profiles.isEmpty) {
-                        return Text('no_profiles'.tr);
-                      }
+                        if (profiles.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text('no_profiles'.tr),
+                          );
+                        }
 
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: profiles.length,
-                        itemBuilder: (context, index) {
-                          final profile = profiles[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text(profile.fullName),
-                              subtitle:
-                                  Text('${profile.email} • ${profile.phone}'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () {
+                        return Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: profiles
+                              .map(
+                                (profile) => SizedBox(
+                                  width: isWide
+                                      ? (constraints.maxWidth / 2) - 20
+                                      : constraints.maxWidth,
+                                  child: _ProfileCard(
+                                    profile: profile,
+                                    onEdit: () {
                                       editingProfile.value = profile;
-                                      fullNameController.text = profile.fullName;
+                                      fullNameController.text =
+                                          profile.fullName;
+                                      jobTitleController.text =
+                                          profile.jobTitle;
+                                      locationController.text =
+                                          profile.location;
                                       emailController.text = profile.email;
                                       phoneController.text = profile.phone;
-                                      summaryController.text = profile.summary;
+                                      portfolioController.text =
+                                          profile.portfolioUrl;
+                                      linkedInController.text =
+                                          profile.linkedInUrl;
+                                      githubController.text =
+                                          profile.githubUrl;
+                                      summaryController.text =
+                                          profile.summary;
                                       imagePath.value = profile.imagePath;
-                                      _updateFormValidity();
+                                      _updatePreviewFromControllers();
                                     },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () async {
+                                    onDelete: () async {
                                       if (profile.id != null) {
                                         await controller.deleteProfile(
                                             profile.id!);
                                       }
                                     },
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      }),
+                    ),
                   ],
                 ),
               ),
@@ -350,6 +416,136 @@ class ProfileView extends GetView<ProfileController> {
           );
         },
       ),
+    );
+  }
+}
+
+class _ProfileCard extends StatelessWidget {
+  const _ProfileCard({
+    required this.profile,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final ResumeProfile profile;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Text(
+                    profile.fullName.isNotEmpty
+                        ? profile.fullName[0].toUpperCase()
+                        : '?',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        profile.fullName,
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      if (profile.jobTitle.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          profile.jobTitle,
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                      ],
+                      if (profile.location.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.place_outlined, size: 16),
+                            const SizedBox(width: 4),
+                            Flexible(child: Text(profile.location)),
+                          ],
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    IconButton(
+                      tooltip: 'edit'.tr,
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: onEdit,
+                    ),
+                    IconButton(
+                      tooltip: 'delete'.tr,
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: onDelete,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            if (profile.summary.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                profile.summary,
+                style: theme.textTheme.bodyMedium,
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (profile.email.isNotEmpty)
+                  _InfoChip(icon: Icons.mail_outline, label: profile.email),
+                if (profile.phone.isNotEmpty)
+                  _InfoChip(icon: Icons.phone_outlined, label: profile.phone),
+                if (profile.portfolioUrl.isNotEmpty)
+                  _InfoChip(icon: Icons.public, label: profile.portfolioUrl),
+                if (profile.linkedInUrl.isNotEmpty)
+                  _InfoChip(icon: Icons.link, label: profile.linkedInUrl),
+                if (profile.githubUrl.isNotEmpty)
+                  _InfoChip(icon: Icons.code_outlined, label: profile.githubUrl),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoChip extends StatelessWidget {
+  const _InfoChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 16),
+      label: Text(label, overflow: TextOverflow.ellipsis),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
     );
   }
 }
