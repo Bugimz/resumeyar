@@ -59,7 +59,7 @@ class CertificationView extends GetView<CertificationController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Certifications')),
+      appBar: AppBar(title: Text('certifications'.tr)),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isWide = constraints.maxWidth > 720;
@@ -86,8 +86,8 @@ class CertificationView extends GetView<CertificationController> {
                             width: fieldWidth,
                             child: TextFormField(
                               controller: titleController,
-                              decoration: const InputDecoration(
-                                labelText: 'Title',
+                              decoration: InputDecoration(
+                                labelText: 'certification_name_label'.tr,
                               ),
                               validator: FormValidators.requiredField,
                               onChanged: (_) => _updateFormValidity(),
@@ -97,8 +97,8 @@ class CertificationView extends GetView<CertificationController> {
                             width: fieldWidth,
                             child: TextFormField(
                               controller: issuerController,
-                              decoration: const InputDecoration(
-                                labelText: 'Issuer',
+                              decoration: InputDecoration(
+                                labelText: 'certification_issuer_label'.tr,
                               ),
                               validator: FormValidators.requiredField,
                               onChanged: (_) => _updateFormValidity(),
@@ -108,8 +108,8 @@ class CertificationView extends GetView<CertificationController> {
                             width: fieldWidth,
                             child: TextFormField(
                               controller: issueDateController,
-                              decoration: const InputDecoration(
-                                labelText: 'Issue Date',
+                              decoration: InputDecoration(
+                                labelText: 'issue_date_label'.tr,
                               ),
                               validator: FormValidators.requiredField,
                               onChanged: (_) => _updateFormValidity(),
@@ -119,8 +119,8 @@ class CertificationView extends GetView<CertificationController> {
                             width: fieldWidth,
                             child: TextFormField(
                               controller: credentialUrlController,
-                              decoration: const InputDecoration(
-                                labelText: 'Credential URL',
+                              decoration: InputDecoration(
+                                labelText: 'credential_url_label'.tr,
                               ),
                               onChanged: (_) => _updateFormValidity(),
                             ),
@@ -136,14 +136,14 @@ class CertificationView extends GetView<CertificationController> {
                                     onPressed: isFormValid.value ? _submit : null,
                                     child: Text(
                                       editingCertification.value == null
-                                          ? 'Save'
-                                          : 'Update',
+                                          ? 'save'.tr
+                                          : 'update'.tr,
                                     ),
                                   ),
                                 ),
                                 TextButton(
                                   onPressed: _resetForm,
-                                  child: const Text('Clear'),
+                                  child: Text('clear'.tr),
                                 ),
                               ],
                             ),
@@ -152,15 +152,14 @@ class CertificationView extends GetView<CertificationController> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    const Text(
-                      'Certifications',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
+                    Text('certifications'.tr,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     Obx(() {
                       final certifications = controller.certifications;
                       if (certifications.isEmpty) {
-                        return const Text('No certifications added yet');
+                        return Text('no_certifications'.tr);
                       }
 
                       return Wrap(
@@ -207,7 +206,7 @@ class CertificationView extends GetView<CertificationController> {
   }
 
   void _openCredentialUrl(String url) {
-    Get.snackbar('Credential', url);
+    Get.snackbar('credential_url_label'.tr, url);
   }
 }
 

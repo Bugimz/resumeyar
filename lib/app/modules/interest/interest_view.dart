@@ -82,27 +82,28 @@ class InterestView extends GetView<InterestController> {
                           children: [
                             SizedBox(
                               width: fieldWidth,
-                              child: TextFormField(
-                                controller: nameController,
-                                decoration: InputDecoration(
-                                  labelText: 'Interest',
-                                  prefixIcon: const Icon(Icons.favorite_outline),
-                                ),
+                            child: TextFormField(
+                              controller: nameController,
+                              decoration: InputDecoration(
+                                labelText: 'interest_title_label'.tr,
+                                prefixIcon: const Icon(Icons.favorite_outline),
+                              ),
                                 validator: FormValidators.requiredField,
                                 onChanged: (_) => _updateFormValidity(),
                               ),
                             ),
                             SizedBox(
                               width: fieldWidth,
-                              child: TextFormField(
-                                controller: descriptionController,
-                                decoration: InputDecoration(
-                                  labelText: 'Description',
-                                  prefixIcon:
-                                      const Icon(Icons.short_text_outlined),
-                                ),
-                                validator: FormValidators.requiredField,
-                                onChanged: (_) => _updateFormValidity(),
+                            child: TextFormField(
+                              controller: descriptionController,
+                              decoration: InputDecoration(
+                                labelText: 'interest_details_label'.tr,
+                                prefixIcon:
+                                    const Icon(Icons.short_text_outlined),
+                                hintText: 'interest_details_hint'.tr,
+                              ),
+                              validator: FormValidators.requiredField,
+                              onChanged: (_) => _updateFormValidity(),
                                 maxLines: 3,
                               ),
                             ),
@@ -121,15 +122,15 @@ class InterestView extends GetView<InterestController> {
                                           : Icons.check_circle_outline),
                                       label: Text(
                                         editingInterest.value == null
-                                            ? 'Save'
-                                            : 'Update',
+                                            ? 'save'.tr
+                                            : 'update'.tr,
                                       ),
                                     ),
                                   ),
                                   OutlinedButton.icon(
                                     onPressed: _resetForm,
                                     icon: const Icon(Icons.refresh),
-                                    label: const Text('Clear'),
+                                    label: Text('clear'.tr),
                                   ),
                                 ],
                               ),
@@ -144,7 +145,7 @@ class InterestView extends GetView<InterestController> {
                       child: Obx(() {
                         final interests = controller.interests;
                         if (interests.isEmpty) {
-                          return const Text('No interests added yet');
+                          return Text('no_interests'.tr);
                         }
 
                         return Wrap(

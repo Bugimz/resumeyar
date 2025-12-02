@@ -82,24 +82,24 @@ class LanguageView extends GetView<LanguageController> {
                           children: [
                             SizedBox(
                               width: fieldWidth,
-                              child: TextFormField(
-                                controller: nameController,
-                                decoration: InputDecoration(
-                                  labelText: 'Language',
-                                  prefixIcon: const Icon(Icons.translate),
-                                ),
+                            child: TextFormField(
+                              controller: nameController,
+                              decoration: InputDecoration(
+                                labelText: 'language_name_label'.tr,
+                                prefixIcon: const Icon(Icons.translate),
+                              ),
                                 validator: FormValidators.requiredField,
                                 onChanged: (_) => _updateFormValidity(),
                               ),
                             ),
                             SizedBox(
                               width: fieldWidth,
-                              child: TextFormField(
-                                controller: proficiencyController,
-                                decoration: InputDecoration(
-                                  labelText: 'Proficiency',
-                                  prefixIcon: const Icon(Icons.bar_chart),
-                                ),
+                            child: TextFormField(
+                              controller: proficiencyController,
+                              decoration: InputDecoration(
+                                labelText: 'language_level_label'.tr,
+                                prefixIcon: const Icon(Icons.bar_chart),
+                              ),
                                 validator: FormValidators.requiredField,
                                 onChanged: (_) => _updateFormValidity(),
                               ),
@@ -119,15 +119,15 @@ class LanguageView extends GetView<LanguageController> {
                                           : Icons.check_circle_outline),
                                       label: Text(
                                         editingLanguage.value == null
-                                            ? 'Save'
-                                            : 'Update',
+                                            ? 'save'.tr
+                                            : 'update'.tr,
                                       ),
                                     ),
                                   ),
                                   OutlinedButton.icon(
                                     onPressed: _resetForm,
                                     icon: const Icon(Icons.refresh),
-                                    label: const Text('Clear'),
+                                    label: Text('clear'.tr),
                                   ),
                                 ],
                               ),
@@ -142,7 +142,7 @@ class LanguageView extends GetView<LanguageController> {
                       child: Obx(() {
                         final languages = controller.languages;
                         if (languages.isEmpty) {
-                          return const Text('No languages added yet');
+                          return Text('no_languages'.tr);
                         }
 
                         return Wrap(
@@ -202,7 +202,8 @@ class _LanguageCard extends StatelessWidget {
       child: ListTile(
         leading: const Icon(Icons.language_outlined),
         title: Text(language.name),
-        subtitle: Text('Proficiency: ${language.proficiency}'),
+        subtitle:
+            Text('${'language_level_label'.tr}: ${language.proficiency}'),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
