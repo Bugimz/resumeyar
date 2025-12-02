@@ -4,13 +4,15 @@ import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 
 import '../../data/models/work_experience.dart';
 import '../../utils/validators.dart';
+import '../../utils/widgets/section_card.dart';
 import 'work_controller.dart';
 
 class WorkView extends GetView<WorkController> {
   WorkView({super.key});
 
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController profileIdController = TextEditingController(text: '1');
+  final TextEditingController profileIdController =
+      TextEditingController(text: '1');
   final TextEditingController companyController = TextEditingController();
   final TextEditingController positionController = TextEditingController();
   final TextEditingController startDateController = TextEditingController();
@@ -153,155 +155,206 @@ class WorkView extends GetView<WorkController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Form(
-                      key: _formKey,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      child: Wrap(
-                        spacing: 16,
-                        runSpacing: 12,
-                        children: [
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: profileIdController,
-                              decoration: InputDecoration(labelText: 'profile_id'.tr),
-                              keyboardType: TextInputType.number,
-                              validator: FormValidators.numeric,
-                              onChanged: (_) => _updateFormValidity(),
+                    SectionCard(
+                      title: 'work_experience'.tr,
+                      subtitle: 'work_form_subtitle'.tr,
+                      headerTrailing: OutlinedButton.icon(
+                        onPressed: _loadList,
+                        icon: const Icon(Icons.download_outlined),
+                        label: Text('load_list'.tr),
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 12,
+                          children: [
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: profileIdController,
+                                decoration: InputDecoration(
+                                  labelText: 'profile_id'.tr,
+                                  prefixIcon: const Icon(Icons.badge_outlined),
+                                ),
+                                keyboardType: TextInputType.number,
+                                validator: FormValidators.numeric,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: companyController,
-                              decoration:
-                                  InputDecoration(labelText: 'company_label'.tr),
-                              validator: FormValidators.requiredField,
-                              onChanged: (_) => _updateFormValidity(),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: companyController,
+                                decoration: InputDecoration(
+                                  labelText: 'company_label'.tr,
+                                  prefixIcon: const Icon(Icons.business_center),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: positionController,
-                              decoration:
-                                  InputDecoration(labelText: 'position_label'.tr),
-                              validator: FormValidators.requiredField,
-                              onChanged: (_) => _updateFormValidity(),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: positionController,
+                                decoration: InputDecoration(
+                                  labelText: 'position_label'.tr,
+                                  prefixIcon: const Icon(Icons.work_outline),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: startDateController,
-                              readOnly: true,
-                              decoration: InputDecoration(
-                                labelText: 'start_date'.tr,
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.calendar_today),
-                                  onPressed: () => _pickDate(
-                                    context,
-                                    startDateController,
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: startDateController,
+                                readOnly: true,
+                                decoration: InputDecoration(
+                                  labelText: 'start_date'.tr,
+                                  prefixIcon:
+                                      const Icon(Icons.calendar_today_outlined),
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.event),
+                                    onPressed: () => _pickDate(
+                                      context,
+                                      startDateController,
+                                    ),
                                   ),
                                 ),
+                                validator: FormValidators.date,
                               ),
-                              validator: FormValidators.date,
                             ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: endDateController,
-                              readOnly: true,
-                              decoration: InputDecoration(
-                                labelText: 'end_date'.tr,
-                                suffixIcon: IconButton(
-                                  icon: const Icon(Icons.calendar_today),
-                                  onPressed: () => _pickDate(
-                                    context,
-                                    endDateController,
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: endDateController,
+                                readOnly: true,
+                                decoration: InputDecoration(
+                                  labelText: 'end_date'.tr,
+                                  prefixIcon:
+                                      const Icon(Icons.calendar_today_outlined),
+                                  suffixIcon: IconButton(
+                                    icon: const Icon(Icons.event),
+                                    onPressed: () => _pickDate(
+                                      context,
+                                      endDateController,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              validator: (_) => FormValidators.startBeforeEnd(
-                                start: startDateController.text,
-                                end: endDateController.text,
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: descriptionController,
-                              decoration: InputDecoration(
-                                  labelText: 'description_label'.tr),
-                              validator: FormValidators.requiredField,
-                              maxLines: 3,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 8,
-                              children: [
-                                Obx(() => ElevatedButton(
-                                      onPressed:
-                                          isFormValid.value ? _submit : null,
-                                      child: Text(
-                                        editingExperience.value == null
-                                            ? 'save'.tr
-                                            : 'update'.tr,
-                                      ),
-                                    )),
-                                TextButton(
-                                  onPressed: _resetForm,
-                                  child: Text('clear'.tr),
+                                validator: (_) => FormValidators.startBeforeEnd(
+                                  start: startDateController.text,
+                                  end: endDateController.text,
                                 ),
-                                OutlinedButton(
-                                  onPressed: _loadList,
-                                  child: Text('load_list'.tr),
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: descriptionController,
+                                decoration: InputDecoration(
+                                    labelText: 'description_label'.tr,
+                                    prefixIcon:
+                                        const Icon(Icons.description_outlined)),
+                                validator: FormValidators.requiredField,
+                                maxLines: 3,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: achievementsController,
+                                decoration: InputDecoration(
+                                  labelText: 'achievements_label'.tr,
+                                  hintText: 'bullet_points_hint'.tr,
+                                  prefixIcon: const Icon(Icons.emoji_events),
+                                ),
+                                maxLines: 3,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: techTagsController,
+                                decoration: InputDecoration(
+                                  labelText: 'tech_stack_label'.tr,
+                                  hintText: 'comma_separated_hint'.tr,
+                                  prefixIcon: const Icon(Icons.memory_outlined),
+                                ),
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: metricController,
+                                decoration: InputDecoration(
+                                  labelText: 'metric_label'.tr,
+                                  prefixIcon: const Icon(Icons.trending_up),
+                                ),
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                children: [
+                                  Obx(() => ElevatedButton.icon(
+                                        onPressed:
+                                            isFormValid.value ? _submit : null,
+                                        icon: Icon(editingExperience.value == null
+                                            ? Icons.save_outlined
+                                            : Icons.check_circle_outline),
+                                        label: Text(
+                                          editingExperience.value == null
+                                              ? 'save'.tr
+                                              : 'update'.tr,
+                                        ),
+                                      )),
+                                  OutlinedButton.icon(
+                                    onPressed: _resetForm,
+                                    icon: const Icon(Icons.refresh),
+                                    label: Text('clear'.tr),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'work_experiences_title'.tr,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Obx(() {
-                      final works = controller.works;
+                    SectionCard(
+                      title: 'work_experiences_title'.tr,
+                      subtitle: 'work_list_subtitle'.tr,
+                      child: Obx(() {
+                        final works = controller.works;
 
-                      if (works.isEmpty) {
-                        return Text('no_work_experiences'.tr);
-                      }
+                        if (works.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text('no_work_experiences'.tr),
+                          );
+                        }
 
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: works.length,
-                        itemBuilder: (context, index) {
-                          final experience = works[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text(
-                                  '${experience.company} • ${experience.position}'),
-                              subtitle: Text(
-                                  '${experience.startDate} - ${experience.endDate}\n${experience.description}'),
-                              isThreeLine: true,
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () {
+                        return Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: works
+                              .map(
+                                (experience) => SizedBox(
+                                  width: isWide
+                                      ? (constraints.maxWidth / 2) - 20
+                                      : constraints.maxWidth,
+                                  child: _ExperienceCard(
+                                    experience: experience,
+                                    isWide: isWide,
+                                    onEdit: () {
                                       editingExperience.value = experience;
                                       profileIdController.text =
                                           experience.profileId.toString();
@@ -315,24 +368,26 @@ class WorkView extends GetView<WorkController> {
                                           experience.endDate;
                                       descriptionController.text =
                                           experience.description;
+                                      achievementsController.text =
+                                          experience.achievements.join('\n');
+                                      techTagsController.text =
+                                          experience.techTags.join(', ');
+                                      metricController.text =
+                                          experience.metric ?? '';
                                       _updateFormValidity();
                                     },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () async {
+                                    onDelete: () async {
                                       if (experience.id != null) {
                                         await controller.delete(experience.id!);
                                       }
                                     },
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      }),
+                    ),
                   ],
                 ),
               ),
@@ -342,48 +397,148 @@ class WorkView extends GetView<WorkController> {
       ),
     );
   }
+}
 
-  Widget _buildAchievementsSection(List<String> achievements, bool isWide) {
-    final chips = achievements
-        .map((achievement) => Chip(label: Text(achievement)))
-        .toList();
+class _ExperienceCard extends StatelessWidget {
+  const _ExperienceCard({
+    required this.experience,
+    required this.isWide,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
-    if (isWide) {
-      return Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: chips,
-      );
-    }
+  final WorkExperience experience;
+  final bool isWide;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: achievements
-          .map(
-            (achievement) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 2),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('• '),
-                  Expanded(child: Text(achievement)),
-                ],
-              ),
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.business_center,
+                    color: theme.colorScheme.primary, size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${experience.company} • ${experience.position}',
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${experience.startDate} - ${experience.endDate}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    IconButton(
+                      tooltip: 'edit'.tr,
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: onEdit,
+                    ),
+                    IconButton(
+                      tooltip: 'delete'.tr,
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: onDelete,
+                    ),
+                  ],
+                ),
+              ],
             ),
-          )
-          .toList(),
+            const SizedBox(height: 8),
+            Text(
+              experience.description,
+              style: theme.textTheme.bodyMedium,
+            ),
+            if (experience.metric != null && experience.metric!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Chip(
+                label: Text(experience.metric!),
+                avatar: const Icon(Icons.trending_up, size: 16),
+              ),
+            ],
+            if (experience.achievements.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'achievements_label'.tr,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              _buildAchievementsSection(experience.achievements, isWide),
+            ],
+            if (experience.techTags.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'tech_stack_label'.tr,
+                style: theme.textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              _buildTechTags(experience.techTags),
+            ],
+          ],
+        ),
+      ),
     );
   }
+}
 
-  Widget _buildTechTags(List<String> tags) {
-    if (tags.isEmpty) {
-      return const Text('No tech tags added');
-    }
+Widget _buildAchievementsSection(List<String> achievements, bool isWide) {
+  final chips = achievements
+      .map((achievement) => Chip(label: Text(achievement)))
+      .toList();
 
+  if (isWide) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: tags.map((tag) => Chip(label: Text(tag))).toList(),
+      children: chips,
     );
   }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: achievements
+        .map(
+          (achievement) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('• '),
+                Expanded(child: Text(achievement)),
+              ],
+            ),
+          ),
+        )
+        .toList(),
+  );
+}
+
+Widget _buildTechTags(List<String> tags) {
+  return Wrap(
+    spacing: 8,
+    runSpacing: 8,
+    children: tags.map((tag) => Chip(label: Text(tag))).toList(),
+  );
 }

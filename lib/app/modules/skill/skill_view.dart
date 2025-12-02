@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../data/models/skill.dart';
 import '../../utils/validators.dart';
+import '../../utils/widgets/section_card.dart';
 import 'skill_controller.dart';
 
 class SkillView extends StatefulWidget {
@@ -16,15 +17,13 @@ class _SkillViewState extends State<SkillView> {
   final SkillController controller = Get.find<SkillController>();
 
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController profileIdController = TextEditingController(text: '1');
+  final TextEditingController profileIdController =
+      TextEditingController(text: '1');
   final TextEditingController nameController = TextEditingController();
   final TextEditingController levelController = TextEditingController();
-  final TextEditingController categoryController = TextEditingController(text: 'General');
+  final TextEditingController categoryController =
+      TextEditingController(text: 'General');
   final Rxn<Skill> editingSkill = Rxn<Skill>();
-  final Rx<SkillCategory> selectedCategory = SkillCategory.language.obs;
-  final RxString levelMode = 'numeric'.obs;
-  final RxInt numericLevel = 3.obs;
-  final Rxn<SkillProficiency> selectedProficiency = Rxn<SkillProficiency>();
   final RxBool isFormValid = false.obs;
 
   @override
@@ -99,7 +98,6 @@ class _SkillViewState extends State<SkillView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('skills'.tr),
@@ -119,113 +117,125 @@ class _SkillViewState extends State<SkillView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Form(
-                      key: _formKey,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      child: Wrap(
-                        spacing: 16,
-                        runSpacing: 12,
-                        children: [
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: profileIdController,
-                              decoration: InputDecoration(labelText: 'profile_id'.tr),
-                              keyboardType: TextInputType.number,
-                              validator: FormValidators.numeric,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: nameController,
-                              decoration:
-                                  InputDecoration(labelText: 'skill_name_label'.tr),
-                              validator: FormValidators.requiredField,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: levelController,
-                              decoration:
-                                  InputDecoration(labelText: 'level_label'.tr),
-                              validator: FormValidators.requiredField,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: TextFormField(
-                              controller: categoryController,
-                              decoration:
-                                  InputDecoration(labelText: 'category'.tr),
-                              validator: FormValidators.requiredField,
-                              onChanged: (_) => _updateFormValidity(),
-                            ),
-                          ),
-                          SizedBox(
-                            width: fieldWidth,
-                            child: Wrap(
-                              spacing: 12,
-                              runSpacing: 8,
-                              children: [
-                                Obx(() => ElevatedButton(
-                                      onPressed:
-                                          isFormValid.value ? _submit : null,
-                                      child: Text(
-                                        editingSkill.value == null
-                                            ? 'save'.tr
-                                            : 'update'.tr,
-                                      ),
-                                    )),
-                                TextButton(
-                                  onPressed: _resetForm,
-                                  child: Text('clear'.tr),
+                    SectionCard(
+                      title: 'skills'.tr,
+                      subtitle: 'skill_form_subtitle'.tr,
+                      headerTrailing: OutlinedButton.icon(
+                        onPressed: _loadList,
+                        icon: const Icon(Icons.download_outlined),
+                        label: Text('load_list'.tr),
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        child: Wrap(
+                          spacing: 16,
+                          runSpacing: 12,
+                          children: [
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: profileIdController,
+                                decoration: InputDecoration(
+                                  labelText: 'profile_id'.tr,
+                                  prefixIcon: const Icon(Icons.badge_outlined),
                                 ),
-                                OutlinedButton(
-                                  onPressed: _loadList,
-                                  child: Text('load_list'.tr),
-                                ),
-                              ],
+                                keyboardType: TextInputType.number,
+                                validator: FormValidators.numeric,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
                             ),
-                          ),
-                        ],
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: nameController,
+                                decoration: InputDecoration(
+                                  labelText: 'skill_name_label'.tr,
+                                  prefixIcon: const Icon(Icons.lightbulb_outline),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: levelController,
+                                decoration: InputDecoration(
+                                  labelText: 'level_label'.tr,
+                                  prefixIcon: const Icon(Icons.auto_graph),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: TextFormField(
+                                controller: categoryController,
+                                decoration: InputDecoration(
+                                  labelText: 'category'.tr,
+                                  prefixIcon: const Icon(Icons.category_outlined),
+                                ),
+                                validator: FormValidators.requiredField,
+                                onChanged: (_) => _updateFormValidity(),
+                              ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                children: [
+                                  Obx(() => ElevatedButton.icon(
+                                        onPressed:
+                                            isFormValid.value ? _submit : null,
+                                        icon: Icon(editingSkill.value == null
+                                            ? Icons.save_outlined
+                                            : Icons.check_circle_outline),
+                                        label: Text(
+                                          editingSkill.value == null
+                                              ? 'save'.tr
+                                              : 'update'.tr,
+                                        ),
+                                      )),
+                                  OutlinedButton.icon(
+                                    onPressed: _resetForm,
+                                    icon: const Icon(Icons.refresh),
+                                    label: Text('clear'.tr),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Text(
-                      'skills'.tr,
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    Obx(() {
-                      final skills = controller.skills;
+                    SectionCard(
+                      title: 'skills'.tr,
+                      subtitle: 'skill_list_subtitle'.tr,
+                      child: Obx(() {
+                        final skills = controller.skills;
 
-                      if (skills.isEmpty) {
-                        return Text('no_skills'.tr);
-                      }
+                        if (skills.isEmpty) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Text('no_skills'.tr),
+                          );
+                        }
 
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: skills.length,
-                        itemBuilder: (context, index) {
-                          final skill = skills[index];
-                          return Card(
-                            child: ListTile(
-                              title: Text(skill.name),
-                              subtitle:
-                                  Text('${'level_label'.tr}: ${skill.level}'),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () {
+                        return Wrap(
+                          spacing: 16,
+                          runSpacing: 16,
+                          children: skills
+                              .map(
+                                (skill) => SizedBox(
+                                  width: isWide
+                                      ? (constraints.maxWidth / 2) - 20
+                                      : constraints.maxWidth,
+                                  child: _SkillCard(
+                                    skill: skill,
+                                    onEdit: () {
                                       editingSkill.value = skill;
                                       profileIdController.text =
                                           skill.profileId.toString();
@@ -234,28 +244,106 @@ class _SkillViewState extends State<SkillView> {
                                       categoryController.text = skill.category;
                                       _updateFormValidity();
                                     },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete),
-                                    onPressed: () async {
+                                    onDelete: () async {
                                       if (skill.id != null) {
                                         await controller.delete(skill.id!);
                                       }
                                     },
                                   ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      );
-                    }),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      }),
+                    ),
                   ],
                 ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _SkillCard extends StatelessWidget {
+  const _SkillCard({
+    required this.skill,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final Skill skill;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundColor: theme.colorScheme.primaryContainer,
+                  child: Text(
+                    skill.name.isNotEmpty ? skill.name[0].toUpperCase() : '?',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        skill.name,
+                        style: theme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${'level_label'.tr}: ${skill.level}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                      if (skill.category.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Chip(
+                          label: Text(skill.category),
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: 4,
+                  children: [
+                    IconButton(
+                      tooltip: 'edit'.tr,
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: onEdit,
+                    ),
+                    IconButton(
+                      tooltip: 'delete'.tr,
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: onDelete,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
