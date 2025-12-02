@@ -22,7 +22,7 @@ class _SkillViewState extends State<SkillView> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController levelController = TextEditingController();
   final TextEditingController categoryController =
-      TextEditingController(text: 'General');
+      TextEditingController(text: 'category_default_general'.tr);
   final Rxn<Skill> editingSkill = Rxn<Skill>();
   final RxBool isFormValid = false.obs;
 
@@ -39,7 +39,7 @@ class _SkillViewState extends State<SkillView> {
     editingSkill.value = null;
     nameController.clear();
     levelController.clear();
-    categoryController.text = 'General';
+    categoryController.text = 'category_default_general'.tr;
     isFormValid.value = false;
   }
 

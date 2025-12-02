@@ -37,7 +37,7 @@ class WorkView extends GetView<WorkController> {
     isFormValid.value = false;
   }
 
-  String _formatDate(DateTime date) {
+  String _formatDate(Jalali date) {
     final twoDigits = (int value) => value.toString().padLeft(2, '0');
     return '${date.year}-${twoDigits(date.month)}-${twoDigits(date.day)}';
   }
@@ -54,7 +54,7 @@ class WorkView extends GetView<WorkController> {
     );
 
     if (picked != null) {
-      controller.text = _formatDate(picked.toDateTime());
+      controller.text = _formatDate(picked);
       _updateFormValidity();
     }
   }
